@@ -47,11 +47,11 @@ const Index = () => {
       <section className="pt-32 pb-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
           <div className="mb-8 flex justify-center">
-            <img src={logo} alt="Κουκουνάα Logo" className="w-48 h-48 object-contain" />
+            <img src={logo} alt="Koukouva Logo" className="w-48 h-48 object-contain" />
           </div>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-4 text-foreground leading-tight">
-            Κουκουνάα
+            Koukouva
           </h1>
           
           <p className="text-2xl text-primary mb-8 font-medium">
@@ -66,7 +66,7 @@ const Index = () => {
           <div className="flex gap-4 justify-center">
             <Link to="/auth">
               <Button size="lg" className="text-lg px-8">
-                Join Κουκουνάα
+                Join Koukouva
               </Button>
             </Link>
             <Button size="lg" variant="outline" className="text-lg px-8">
@@ -84,7 +84,7 @@ const Index = () => {
               Everything You Need to Connect
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Κουκουνάα brings together all the tools you need to build meaningful 
+              Koukouva brings together all the tools you need to build meaningful 
               connections with other moms in your community.
             </p>
           </div>
@@ -114,7 +114,7 @@ const Index = () => {
             Ready to Find Your Village?
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of moms who have already found their community on Κουκουνάα.
+            Join thousands of moms who have already found their community on Koukouva.
           </p>
           <Link to="/auth">
             <Button size="lg" className="text-lg px-8">
@@ -127,7 +127,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto text-center text-muted-foreground">
-          <p>&copy; 2025 Κουκουνάα. Built with love for moms everywhere.</p>
+          <p>&copy; 2025 Koukouva. Built with love for moms everywhere.</p>
         </div>
       </footer>
     </div>
