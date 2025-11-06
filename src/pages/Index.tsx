@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, MessageCircle, Calendar, ShoppingBag, Users, MapPin } from "lucide-react";
+import logo from "@/assets/logo.jpg";
 
 const Index = () => {
   const features = [
@@ -45,16 +46,19 @@ const Index = () => {
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 text-secondary-foreground mb-6">
-            <Heart className="h-4 w-4 fill-primary text-primary" />
-            <span className="text-sm font-medium">Your Village Awaits</span>
+          <div className="mb-8 flex justify-center">
+            <img src={logo} alt="Κουκουνάα Logo" className="w-48 h-48 object-contain" />
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-foreground leading-tight">
-            Find Your Mom Tribe
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-foreground leading-tight">
+            Κουκουνάα
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-2xl text-primary mb-8 font-medium">
+            Together, moms thrive.
+          </p>
+          
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Connect with amazing moms in your area. Share experiences, plan playdates, 
             and build lasting friendships in a supportive community.
           </p>
@@ -62,7 +66,7 @@ const Index = () => {
           <div className="flex gap-4 justify-center">
             <Link to="/auth">
               <Button size="lg" className="text-lg px-8">
-                Join Mamaville
+                Join Κουκουνάα
               </Button>
             </Link>
             <Button size="lg" variant="outline" className="text-lg px-8">
@@ -80,7 +84,7 @@ const Index = () => {
               Everything You Need to Connect
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Mamaville brings together all the tools you need to build meaningful 
+              Κουκουνάα brings together all the tools you need to build meaningful 
               connections with other moms in your community.
             </p>
           </div>
@@ -110,7 +114,7 @@ const Index = () => {
             Ready to Find Your Village?
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of moms who have already found their community on Mamaville.
+            Join thousands of moms who have already found their community on Κουκουνάα.
           </p>
           <Link to="/auth">
             <Button size="lg" className="text-lg px-8">
@@ -123,7 +127,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto text-center text-muted-foreground">
-          <p>&copy; 2025 Mamaville. Built with love for moms everywhere.</p>
+          <p>&copy; 2025 Κουκουνάα. Built with love for moms everywhere.</p>
         </div>
       </footer>
     </div>
