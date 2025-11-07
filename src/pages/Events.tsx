@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Clock } from "lucide-react";
+import mascot from "@/assets/mascot.jpg";
 
 export default function Events() {
   const events = [
@@ -38,11 +39,18 @@ export default function Events() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 relative">
+      <img 
+        src={mascot} 
+        alt="Momster Mascot" 
+        className="fixed top-24 right-4 w-20 h-20 opacity-20 object-contain pointer-events-none"
+      />
       <div className="max-w-2xl mx-auto pt-20 pb-24 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Upcoming Events</h1>
-          <Button>Create Event</Button>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Εκδηλώσεις
+          </h1>
+          <Button>Νέα Εκδήλωση</Button>
         </div>
 
         <div className="space-y-4">

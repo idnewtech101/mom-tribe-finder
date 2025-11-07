@@ -3,23 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Heart } from "lucide-react";
+import mascot from "@/assets/mascot.jpg";
+import logoFull from "@/assets/logo-full.jpg";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/30 p-4">
-      <Card className="w-full max-w-md p-8 shadow-lg">
-        <div className="flex justify-center mb-6">
-          <div className="flex items-center gap-2">
-            <Heart className="w-8 h-8 text-primary fill-primary" />
-            <h1 className="text-3xl font-bold text-primary">Mamaville</h1>
-          </div>
+      <Card className="w-full max-w-md p-8 shadow-lg relative overflow-hidden">
+        <img 
+          src={mascot} 
+          alt="Momster Mascot" 
+          className="absolute -bottom-10 -right-10 w-32 h-32 opacity-10 object-contain"
+        />
+        
+        <div className="flex flex-col items-center mb-6 relative z-10">
+          <img src={logoFull} alt="Momster Logo" className="h-16 mb-4" />
+          <h1 className="text-3xl font-bold text-primary" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Momster
+          </h1>
         </div>
         
         <p className="text-center text-muted-foreground mb-8 italic">
-          "Together, women thrive."
+          "Μαμάδες Μαζί, Δυνατές Πάντα"
         </p>
 
         <div className="space-y-4">

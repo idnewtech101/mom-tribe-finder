@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, X, MapPin, User } from "lucide-react";
+import mascot from "@/assets/mascot.jpg";
 
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -38,10 +39,15 @@ export default function Discover() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 relative">
+      <img 
+        src={mascot} 
+        alt="Momster Mascot" 
+        className="fixed top-24 right-4 w-20 h-20 opacity-20 object-contain pointer-events-none"
+      />
       <div className="max-w-md mx-auto pt-20 pb-24">
-        <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
-          Discover Moms Nearby
+        <h1 className="text-2xl font-bold text-center mb-6 text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+          Ανακάλυψε Μαμάδες
         </h1>
 
         <Card className="overflow-hidden shadow-xl">

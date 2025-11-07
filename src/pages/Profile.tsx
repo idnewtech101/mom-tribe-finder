@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Settings, MapPin, User, Heart, Calendar, ShoppingBag } from "lucide-react";
+import mascot from "@/assets/mascot.jpg";
 
 export default function Profile() {
   const profile = {
@@ -21,10 +22,17 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 relative">
+      <img 
+        src={mascot} 
+        alt="Momster Mascot" 
+        className="fixed top-24 right-4 w-20 h-20 opacity-20 object-contain pointer-events-none"
+      />
       <div className="max-w-2xl mx-auto pt-20 pb-24 px-4">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Profile</h1>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Προφίλ
+          </h1>
           <Button variant="outline" size="icon">
             <Settings className="w-5 h-5" />
           </Button>

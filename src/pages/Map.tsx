@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Navigation as NavigationIcon } from "lucide-react";
+import mascot from "@/assets/mascot.jpg";
 
 export default function Map() {
   const nearbyMoms = [
@@ -29,9 +30,16 @@ export default function Map() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 relative">
+      <img 
+        src={mascot} 
+        alt="Momster Mascot" 
+        className="fixed top-24 right-4 w-20 h-20 opacity-20 object-contain pointer-events-none"
+      />
       <div className="max-w-2xl mx-auto pt-20 pb-24 px-4">
-        <h1 className="text-2xl font-bold mb-6 text-foreground">Moms Near You</h1>
+        <h1 className="text-2xl font-bold mb-6 text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+          Κοντινές Μαμάδες
+        </h1>
 
         {/* Map Placeholder */}
         <Card className="mb-6 h-64 flex items-center justify-center bg-secondary/20">

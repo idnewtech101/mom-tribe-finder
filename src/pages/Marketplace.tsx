@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin } from "lucide-react";
+import mascot from "@/assets/mascot.jpg";
 
 export default function Marketplace() {
   const items = [
@@ -48,11 +49,18 @@ export default function Marketplace() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 relative">
+      <img 
+        src={mascot} 
+        alt="Momster Mascot" 
+        className="fixed top-24 right-4 w-20 h-20 opacity-20 object-contain pointer-events-none"
+      />
       <div className="max-w-6xl mx-auto pt-20 pb-24 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Marketplace</h1>
-          <Button>List Item</Button>
+          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Αγορά
+          </h1>
+          <Button>Νέα Καταχώριση</Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
