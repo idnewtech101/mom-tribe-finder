@@ -129,8 +129,8 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/30 p-4">
-      <Card className="w-full max-w-md p-8 shadow-lg relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-8 shadow-lg relative overflow-hidden bg-background/95 backdrop-blur-sm">
         <img 
           src={mascot} 
           alt="Momster Mascot" 
