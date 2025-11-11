@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import mascot from "@/assets/mascot.jpg";
 import logoFull from "@/assets/logo-full.jpg";
+import MomsterMascot from "@/components/MomsterMascot";
+import { useMascot } from "@/hooks/use-mascot";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,6 +20,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { mascotConfig, visible, hideMascot, showWelcome } = useMascot();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -71,7 +74,8 @@ export default function Auth() {
         if (profileError) throw profileError;
 
         toast.success("Λογαριασμός δημιουργήθηκε! Συμπληρώστε το προφίλ σας.");
-        navigate("/profile-setup");
+        showWelcome();
+        setTimeout(() => navigate("/profile-setup"), 2000);
       }
     } catch (error: any) {
       toast.error(error.message || "Σφάλμα κατά την εγγραφή");
@@ -101,9 +105,11 @@ export default function Auth() {
           .single();
 
         if (!profile?.profile_completed) {
-          navigate("/profile-setup");
+          showWelcome();
+          setTimeout(() => navigate("/profile-setup"), 2000);
         } else {
-          navigate("/discover");
+          showWelcome();
+          setTimeout(() => navigate("/discover"), 2000);
         }
       }
     } catch (error: any) {
@@ -251,10 +257,23 @@ export default function Auth() {
 
         <div className="mt-6 text-center">
           <Link to="/privacy-terms" className="text-xs text-muted-foreground hover:text-primary underline">
-            Πολιτική Απορρήτου & Όροι Χρήσης
+          Πολιτική Απορρήτου & Όροι Χρήσης
           </Link>
         </div>
       </Card>
+
+      {mascotConfig && (
+        <MomsterMascot
+          state={mascotConfig.state}
+          message={mascotConfig.message}
+          visible={visible}
+          showButton={mascotConfig.showButton}
+          buttonText={mascotConfig.buttonText}
+          onButtonClick={mascotConfig.onButtonClick}
+          duration={mascotConfig.duration}
+          onHide={hideMascot}
+        />
+      )}
     </div>
   );
 }

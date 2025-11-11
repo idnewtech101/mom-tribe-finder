@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, X, MapPin, User } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
+import MomsterMascot from "@/components/MomsterMascot";
+import { useMascot } from "@/hooks/use-mascot";
 
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate();
+  const { mascotConfig, visible, hideMascot, showMatch, showEmptyDiscover } = useMascot();
 
   const profiles = [
     {
@@ -35,8 +40,33 @@ export default function Discover() {
 
   const handleSwipe = (liked: boolean) => {
     console.log(liked ? "Liked!" : "Passed");
-    setCurrentIndex((prev) => (prev + 1) % profiles.length);
+    
+    const nextIndex = currentIndex + 1;
+    
+    if (liked) {
+      // Simulate mutual match (50% chance for demo)
+      const isMutualMatch = Math.random() > 0.5;
+      if (isMutualMatch) {
+        showMatch(() => navigate("/chats"));
+      }
+    }
+    
+    if (nextIndex >= profiles.length) {
+      // Show empty state
+      showEmptyDiscover();
+      setTimeout(() => {
+        setCurrentIndex(0); // Reset to beginning
+      }, 3000);
+    } else {
+      setCurrentIndex(nextIndex);
+    }
   };
+
+  useEffect(() => {
+    if (profiles.length === 0) {
+      showEmptyDiscover();
+    }
+  }, [profiles.length, showEmptyDiscover]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 relative">
@@ -110,6 +140,19 @@ export default function Discover() {
           <span className="text-sm text-muted-foreground">Together, moms thrive!</span>
         </div>
       </footer>
+
+      {mascotConfig && (
+        <MomsterMascot
+          state={mascotConfig.state}
+          message={mascotConfig.message}
+          visible={visible}
+          showButton={mascotConfig.showButton}
+          buttonText={mascotConfig.buttonText}
+          onButtonClick={mascotConfig.onButtonClick}
+          duration={mascotConfig.duration}
+          onHide={hideMascot}
+        />
+      )}
     </div>
   );
 }

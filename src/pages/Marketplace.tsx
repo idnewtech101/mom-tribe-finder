@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
+import MomsterMascot from "@/components/MomsterMascot";
+import { useMascot } from "@/hooks/use-mascot";
 
 export default function Marketplace() {
+  const { mascotConfig, visible, hideMascot, showEmptyMarketplace } = useMascot();
+  
   const items = [
     {
       id: 1,
@@ -47,6 +52,12 @@ export default function Marketplace() {
       isFree: false
     }
   ];
+
+  useEffect(() => {
+    if (items.length === 0) {
+      showEmptyMarketplace();
+    }
+  }, [items.length, showEmptyMarketplace]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 relative">
@@ -116,6 +127,19 @@ export default function Marketplace() {
           <span className="text-sm text-muted-foreground">Together, moms thrive!</span>
         </div>
       </footer>
+
+      {mascotConfig && (
+        <MomsterMascot
+          state={mascotConfig.state}
+          message={mascotConfig.message}
+          visible={visible}
+          showButton={mascotConfig.showButton}
+          buttonText={mascotConfig.buttonText}
+          onButtonClick={mascotConfig.onButtonClick}
+          duration={mascotConfig.duration}
+          onHide={hideMascot}
+        />
+      )}
     </div>
   );
 }

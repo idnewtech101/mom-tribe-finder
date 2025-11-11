@@ -4,8 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Settings, MapPin, User, Heart, Calendar, ShoppingBag } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
+import MomsterMascot from "@/components/MomsterMascot";
+import { useMascot } from "@/hooks/use-mascot";
 
 export default function Profile() {
+  const { mascotConfig, visible, hideMascot, showReportThanks } = useMascot();
+  
   const profile = {
     name: "Your Name",
     age: 32,
@@ -124,6 +128,19 @@ export default function Profile() {
           <span className="text-sm text-muted-foreground">Together, moms thrive!</span>
         </div>
       </footer>
+
+      {mascotConfig && (
+        <MomsterMascot
+          state={mascotConfig.state}
+          message={mascotConfig.message}
+          visible={visible}
+          showButton={mascotConfig.showButton}
+          buttonText={mascotConfig.buttonText}
+          onButtonClick={mascotConfig.onButtonClick}
+          duration={mascotConfig.duration}
+          onHide={hideMascot}
+        />
+      )}
     </div>
   );
 }
