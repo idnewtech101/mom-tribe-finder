@@ -186,6 +186,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_area: { Args: { _user_id: string }; Returns: string }
+      get_user_city: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
