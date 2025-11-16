@@ -15,7 +15,7 @@ const translations = {
     getStarted: 'Ξεκινήστε',
     
     // Hero Section
-    heroTagline: 'Μαζί, οι μαμάδες ανθίζουν!',
+    heroTagline: 'Together, moms thrive!',
     heroDescription: 'Συνδεθείτε με υπέροχες μαμάδες στην περιοχή σας. Μοιραστείτε εμπειρίες, οργανώστε playdates και χτίστε διαρκείς φιλίες σε μια υποστηρικτική κοινότητα.',
     joinMomster: 'Γίνετε μέλος',
     learnMore: 'Μάθετε περισσότερα',
@@ -44,7 +44,7 @@ const translations = {
     ctaSubtitle: 'Γίνετε μέλος σε χιλιάδες μαμάδες που χτίζουν υποστηρικτικές φιλίες και μοιράζονται το ταξίδι της μητρότητας μαζί.',
     
     // Footer
-    footerCopyright: '© 2024 Momster. Με αγάπη για κάθε μαμά.',
+    footerCopyright: '© 2025 Momster. Made with love for every mom.',
     privacyTerms: 'Απόρρητο & Όροι',
   },
   en: {
@@ -82,7 +82,7 @@ const translations = {
     ctaSubtitle: 'Join thousands of moms building supportive friendships and sharing the journey of motherhood together.',
     
     // Footer
-    footerCopyright: '© 2024 Momster. Made with love for every mom.',
+    footerCopyright: '© 2025 Momster. Made with love for every mom.',
     privacyTerms: 'Privacy & Terms',
   },
 };
