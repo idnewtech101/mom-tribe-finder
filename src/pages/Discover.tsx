@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,10 @@ import { useMascot } from "@/hooks/use-mascot";
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchVideo, setShowMatchVideo] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { mascotConfig, visible, hideMascot, showMatch, showEmptyDiscover } = useMascot();
 
@@ -84,6 +88,72 @@ export default function Discover() {
     }
   };
 
+  const handleDragStart = (clientX: number, clientY: number) => {
+    setIsDragging(true);
+    setDragStart({ x: clientX, y: clientY });
+  };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (!isDragging) return;
+    
+    const deltaX = clientX - dragStart.x;
+    const deltaY = clientY - dragStart.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+  };
+
+  const handleDragEnd = () => {
+    if (!isDragging) return;
+    
+    const swipeThreshold = 100;
+    
+    if (Math.abs(dragOffset.x) > swipeThreshold) {
+      // Swipe detected
+      handleSwipe(dragOffset.x > 0);
+    }
+    
+    // Reset drag state
+    setIsDragging(false);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    handleDragStart(e.clientX, e.clientY);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    handleDragMove(e.clientX, e.clientY);
+  };
+
+  const onMouseUp = () => {
+    handleDragEnd();
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleDragStart(touch.clientX, touch.clientY);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleDragMove(touch.clientX, touch.clientY);
+  };
+
+  const onTouchEnd = () => {
+    handleDragEnd();
+  };
+
+  const getCardStyle = () => {
+    const rotation = dragOffset.x * 0.1;
+    const opacity = 1 - Math.abs(dragOffset.x) / 300;
+    
+    return {
+      transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotation}deg)`,
+      opacity: Math.max(0.5, opacity),
+      transition: isDragging ? 'none' : 'transform 0.3s ease, opacity 0.3s ease',
+      cursor: isDragging ? 'grabbing' : 'grab'
+    };
+  };
+
   useEffect(() => {
     if (profiles.length === 0) {
       showEmptyDiscover();
@@ -102,13 +172,46 @@ export default function Discover() {
           Ανακάλυψε Μαμάδες
         </h1>
 
-        <Card className="overflow-hidden shadow-xl">
+        <Card 
+          ref={cardRef}
+          className="overflow-hidden shadow-xl select-none"
+          style={getCardStyle()}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <div className="relative">
             <img
               src={currentProfile.image}
               alt={currentProfile.name}
-              className="w-full h-96 object-cover"
+              className="w-full h-96 object-cover pointer-events-none"
             />
+            
+            {/* Swipe indicators */}
+            {isDragging && (
+              <>
+                <div 
+                  className="absolute top-1/2 left-8 -translate-y-1/2 transition-opacity"
+                  style={{ opacity: Math.max(0, -dragOffset.x / 100) }}
+                >
+                  <div className="bg-destructive text-destructive-foreground px-6 py-3 rounded-lg text-2xl font-bold rotate-[-20deg] border-4 border-destructive">
+                    NOPE
+                  </div>
+                </div>
+                <div 
+                  className="absolute top-1/2 right-8 -translate-y-1/2 transition-opacity"
+                  style={{ opacity: Math.max(0, dragOffset.x / 100) }}
+                >
+                  <div className="bg-primary text-primary-foreground px-6 py-3 rounded-lg text-2xl font-bold rotate-[20deg] border-4 border-primary">
+                    LIKE
+                  </div>
+                </div>
+              </>
+            )}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
               <h2 className="text-2xl font-bold">{currentProfile.name}, {currentProfile.age}</h2>
               <div className="flex items-center gap-2 mt-1">
