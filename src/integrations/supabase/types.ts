@@ -49,6 +49,7 @@ export type Database = {
           created_at: string
           id: string
           likes_count: number
+          pseudonym: string | null
           question_id: string
           updated_at: string
           user_id: string
@@ -58,6 +59,7 @@ export type Database = {
           created_at?: string
           id?: string
           likes_count?: number
+          pseudonym?: string | null
           question_id: string
           updated_at?: string
           user_id: string
@@ -67,6 +69,7 @@ export type Database = {
           created_at?: string
           id?: string
           likes_count?: number
+          pseudonym?: string | null
           question_id?: string
           updated_at?: string
           user_id?: string
@@ -308,6 +311,7 @@ export type Database = {
           display_mode: string
           id: string
           likes_count: number
+          pseudonym: string | null
           updated_at: string
           user_id: string
         }
@@ -318,6 +322,7 @@ export type Database = {
           display_mode?: string
           id?: string
           likes_count?: number
+          pseudonym?: string | null
           updated_at?: string
           user_id: string
         }
@@ -328,6 +333,7 @@ export type Database = {
           display_mode?: string
           id?: string
           likes_count?: number
+          pseudonym?: string | null
           updated_at?: string
           user_id?: string
         }

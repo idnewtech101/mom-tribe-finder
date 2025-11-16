@@ -3,17 +3,21 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, Send } from "lucide-react";
+import { Heart, MessageCircle, Send, Trash2, Edit2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import mascot from "@/assets/mascot.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Question {
   id: string;
   content: string;
   display_mode: 'name' | 'pseudonym' | 'anonymous';
+  pseudonym?: string;
   likes_count: number;
   answers_count: number;
   created_at: string;
@@ -26,6 +30,7 @@ interface Question {
 interface Answer {
   id: string;
   content: string;
+  pseudonym?: string;
   likes_count: number;
   created_at: string;
   user_id: string;
@@ -38,18 +43,39 @@ export default function AskMoms() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [displayMode, setDisplayMode] = useState<'name' | 'pseudonym' | 'anonymous'>('name');
+  const [pseudonym, setPseudonym] = useState("");
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [newAnswer, setNewAnswer] = useState("");
   const [likedQuestions, setLikedQuestions] = useState<Set<string>>(new Set());
   const [likedAnswers, setLikedAnswers] = useState<Set<string>>(new Set());
   const [animatingHeart, setAnimatingHeart] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [editingAnswer, setEditingAnswer] = useState<Answer | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    checkUserRole();
     fetchQuestions();
     fetchUserLikes();
   }, []);
+
+  const checkUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    setCurrentUserId(user.id);
+    
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    setIsAdmin(roleData?.role === 'admin');
+  };
 
   const fetchQuestions = async () => {
     const { data, error } = await supabase
@@ -103,6 +129,11 @@ export default function AskMoms() {
 
   const handleSubmitQuestion = async () => {
     if (!newQuestion.trim()) return;
+    
+    if (displayMode === 'pseudonym' && !pseudonym.trim()) {
+      toast({ title: "Συμπλήρωσε το ψευδώνυμο", variant: "destructive" });
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -110,22 +141,86 @@ export default function AskMoms() {
       return;
     }
 
+    if (editingQuestion) {
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          content: newQuestion,
+          display_mode: displayMode,
+          pseudonym: displayMode === 'pseudonym' ? pseudonym : null
+        })
+        .eq('id', editingQuestion.id);
+
+      if (error) {
+        toast({ title: "Σφάλμα", description: "Δεν μπόρεσε να ενημερωθεί η ερώτηση", variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Επιτυχία! 💕", description: "Η ερώτηση ενημερώθηκε!" });
+      setEditingQuestion(null);
+    } else {
+      const { error } = await supabase
+        .from('questions')
+        .insert({
+          content: newQuestion,
+          display_mode: displayMode,
+          pseudonym: displayMode === 'pseudonym' ? pseudonym : null,
+          user_id: user.id
+        });
+
+      if (error) {
+        toast({ title: "Σφάλμα", description: "Δεν μπόρεσε να δημοσιευτεί η ερώτηση", variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Επιτυχία! 💕", description: "Η ερώτησή σου δημοσιεύτηκε!" });
+    }
+    
+    setNewQuestion("");
+    setDisplayMode('name');
+    setPseudonym("");
+    fetchQuestions();
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
     const { error } = await supabase
       .from('questions')
-      .insert({
-        content: newQuestion,
-        display_mode: displayMode,
-        user_id: user.id
-      });
+      .delete()
+      .eq('id', questionId);
 
     if (error) {
-      toast({ title: "Σφάλμα", description: "Δεν μπόρεσε να δημοσιευτεί η ερώτηση", variant: "destructive" });
+      toast({ title: "Σφάλμα", description: "Δεν μπόρεσε να διαγραφεί η ερώτηση", variant: "destructive" });
       return;
     }
 
-    toast({ title: "Επιτυχία! 🌸", description: "Η ερώτησή σου δημοσιεύτηκε!" });
-    setNewQuestion("");
+    toast({ title: "Επιτυχία", description: "Η ερώτηση διαγράφηκε" });
     fetchQuestions();
+  };
+
+  const handleEditQuestion = (question: Question) => {
+    setNewQuestion(question.content);
+    setDisplayMode(question.display_mode);
+    setPseudonym(question.pseudonym || "");
+    setEditingQuestion(question);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteAnswer = async (answerId: string) => {
+    const { error } = await supabase
+      .from('answers')
+      .delete()
+      .eq('id', answerId);
+
+    if (error) {
+      toast({ title: "Σφάλμα", description: "Δεν μπόρεσε να διαγραφεί η απάντηση", variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Επιτυχία", description: "Η απάντηση διαγράφηκε" });
+    if (selectedQuestion) {
+      fetchAnswers(selectedQuestion.id);
+      fetchQuestions();
+    }
   };
 
   const handleLikeQuestion = async (questionId: string) => {
@@ -249,8 +344,16 @@ export default function AskMoms() {
 
   const getDisplayName = (question: Question) => {
     if (question.display_mode === 'anonymous') return 'Ανώνυμη 🌸';
-    if (question.display_mode === 'pseudonym') return 'Μαμά ' + question.user_id.slice(0, 4);
+    if (question.display_mode === 'pseudonym') return question.pseudonym || 'Ανώνυμη 🌸';
     return question.profiles?.full_name || 'Μαμά';
+  };
+
+  const getAnswerDisplayName = (answer: Answer) => {
+    return answer.profiles?.full_name || 'Μαμά';
+  };
+
+  const canEditOrDelete = (userId: string) => {
+    return isAdmin || currentUserId === userId;
   };
 
   return (
@@ -317,10 +420,38 @@ export default function AskMoms() {
               </Tabs>
             </div>
             
+            {displayMode === 'pseudonym' && (
+              <div className="space-y-2">
+                <Label htmlFor="pseudonym" className="text-xs">Το ψευδώνυμό σου:</Label>
+                <Input
+                  id="pseudonym"
+                  placeholder="π.χ. Μαμά_Αθήνα, Έλλη82..."
+                  value={pseudonym}
+                  onChange={(e) => setPseudonym(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+            )}
+            
             <Button onClick={handleSubmitQuestion} className="w-full">
               <Send className="w-4 h-4 mr-2" />
-              Δημοσίευση
+              {editingQuestion ? "Ενημέρωση" : "Δημοσίευση"}
             </Button>
+            
+            {editingQuestion && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setEditingQuestion(null);
+                  setNewQuestion("");
+                  setPseudonym("");
+                  setDisplayMode('name');
+                }} 
+                className="w-full"
+              >
+                Ακύρωση
+              </Button>
+            )}
           </div>
         </Card>
 
@@ -338,6 +469,44 @@ export default function AskMoms() {
                   </div>
                   <p className="text-foreground">{question.content}</p>
                 </div>
+                
+                {canEditOrDelete(question.user_id) && (
+                  <div className="flex gap-1 ml-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditQuestion(question)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Διαγραφή ερώτησης</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Είσαι σίγουρη ότι θέλεις να διαγράψεις αυτή την ερώτηση; Η ενέργεια δεν μπορεί να αναιρεθεί.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Ακύρωση</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteQuestion(question.id)}>
+                            Διαγραφή
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-4 pt-3 border-t">
@@ -389,10 +558,38 @@ export default function AskMoms() {
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex-1">
                                 <p className="font-semibold text-xs mb-1">
-                                  {answer.profiles?.full_name || 'Μαμά'}
+                                  {getAnswerDisplayName(answer)}
                                 </p>
                                 <p className="text-sm">{answer.content}</p>
                               </div>
+                              
+                              {canEditOrDelete(answer.user_id) && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-destructive hover:text-destructive ml-2"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Διαγραφή απάντησης</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Είσαι σίγουρη ότι θέλεις να διαγράψεις αυτή την απάντηση; Η ενέργεια δεν μπορεί να αναιρεθεί.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Ακύρωση</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteAnswer(answer.id)}>
+                                        Διαγραφή
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
                             </div>
                             <Button
                               variant="ghost"
