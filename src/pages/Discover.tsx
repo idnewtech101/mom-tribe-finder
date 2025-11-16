@@ -10,6 +10,7 @@ import { useMascot } from "@/hooks/use-mascot";
 
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showMatchVideo, setShowMatchVideo] = useState(false);
   const navigate = useNavigate();
   const { mascotConfig, visible, hideMascot, showMatch, showEmptyDiscover } = useMascot();
 
@@ -47,7 +48,12 @@ export default function Discover() {
       // Simulate mutual match (50% chance for demo)
       const isMutualMatch = Math.random() > 0.5;
       if (isMutualMatch) {
-        showMatch(() => navigate("/chats"));
+        setShowMatchVideo(true);
+        // Video will auto-hide after playing and show mascot
+        setTimeout(() => {
+          setShowMatchVideo(false);
+          showMatch(() => navigate("/chats"));
+        }, 3000); // Adjust based on video length
       }
     }
     
@@ -152,6 +158,24 @@ export default function Discover() {
           duration={mascotConfig.duration}
           onHide={hideMascot}
         />
+      )}
+
+      {/* Match Celebration Video */}
+      {showMatchVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-fade-in">
+          <video
+            autoPlay
+            muted
+            playsInline
+            className="max-w-full max-h-full"
+            onEnded={() => {
+              setShowMatchVideo(false);
+              showMatch(() => navigate("/chats"));
+            }}
+          >
+            <source src="/videos/match-celebration.mp4" type="video/mp4" />
+          </video>
+        </div>
       )}
     </div>
   );
