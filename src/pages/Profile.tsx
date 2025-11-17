@@ -265,6 +265,30 @@ export default function Profile() {
   const childrenArray = Array.isArray(profile.children) ? profile.children : [];
   const childAges = childrenArray.map((child: any) => child.age).join(", ");
 
+  // Calculate age from date_of_birth
+  const calculateAge = (dateOfBirth: string) => {
+    if (!dateOfBirth) return null;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const userAge = calculateAge(profile.date_of_birth);
+
+  // Generate frame style based on profile ID (deterministic)
+  const getFrameStyle = (id: string) => {
+    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const styles = ['flowers', 'hearts', 'momster'];
+    return styles[hash % styles.length];
+  };
+
+  const frameStyle = getFrameStyle(profile.id);
+
   const maritalStatusText = {
     married: language === "el" ? "Παντρεμένη" : "Married",
     single_parent: language === "el" ? "Μονογονέας" : "Single Parent",
@@ -308,8 +332,24 @@ export default function Profile() {
                             <AvatarImage src={photo} alt={`${profile.full_name} ${index + 1}`} />
                             <AvatarFallback>{profile.full_name?.[0]}</AvatarFallback>
                           </Avatar>
-                          <div className="absolute -top-2 -right-2 text-3xl animate-bounce">🌸</div>
-                          <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">🌺</div>
+                          {frameStyle === 'flowers' && (
+                            <>
+                              <div className="absolute -top-2 -right-2 text-3xl animate-bounce">🌸</div>
+                              <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">🌺</div>
+                            </>
+                          )}
+                          {frameStyle === 'hearts' && (
+                            <>
+                              <div className="absolute -top-2 -right-2 text-3xl animate-bounce">💖</div>
+                              <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">💕</div>
+                            </>
+                          )}
+                          {frameStyle === 'momster' && (
+                            <>
+                              <div className="absolute -top-2 -right-2 text-2xl animate-bounce">👶</div>
+                              <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">🤱</div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CarouselItem>
@@ -327,13 +367,30 @@ export default function Profile() {
                   <AvatarImage src={profilePhotos[0]} alt={profile.full_name} />
                   <AvatarFallback>{profile.full_name?.[0]}</AvatarFallback>
                 </Avatar>
-                <div className="absolute -top-2 -right-2 text-3xl animate-bounce">🌸</div>
-                <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">🌺</div>
+                {frameStyle === 'flowers' && (
+                  <>
+                    <div className="absolute -top-2 -right-2 text-3xl animate-bounce">🌸</div>
+                    <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">🌺</div>
+                  </>
+                )}
+                {frameStyle === 'hearts' && (
+                  <>
+                    <div className="absolute -top-2 -right-2 text-3xl animate-bounce">💖</div>
+                    <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">💕</div>
+                  </>
+                )}
+                {frameStyle === 'momster' && (
+                  <>
+                    <div className="absolute -top-2 -right-2 text-2xl animate-bounce">👶</div>
+                    <div className="absolute -bottom-2 -left-2 text-2xl animate-pulse">🤱</div>
+                  </>
+                )}
               </div>
             )}
 
             <h2 className="text-2xl font-bold text-foreground text-center">
               {profile.full_name}
+              {userAge && <span className="text-muted-foreground ml-2">{userAge}</span>}
             </h2>
             
             {childAges && (
@@ -481,15 +538,6 @@ export default function Profile() {
                 <MapPin className="w-4 h-4 text-primary" />
                 <span className="text-muted-foreground">
                   {[profile.city, profile.area].filter(Boolean).join(", ")}
-                </span>
-              </div>
-            )}
-
-            {profile.date_of_birth && (
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">
-                  {new Date(profile.date_of_birth).toLocaleDateString(language === "el" ? "el-GR" : "en-US")}
                 </span>
               </div>
             )}
