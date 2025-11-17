@@ -68,6 +68,7 @@ export default function Profile() {
     discovery_visible: true,
     show_last_active: true,
   });
+  const [childrenInput, setChildrenInput] = useState("");
 
   useEffect(() => {
     fetchProfile();
