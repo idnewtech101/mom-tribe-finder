@@ -15,64 +15,79 @@ export const PhotoUpload = ({ onPhotoUploaded, currentPhotoUrl }: PhotoUploadPro
   const [preview, setPreview] = useState<string | null>(currentPhotoUrl || null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error("Please select an image file");
-      return;
+    // Validate files
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select image files only");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Each file must be less than 5MB");
+        return;
+      }
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
-      return;
-    }
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Upload to Supabase Storage
     setUploading(true);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      // Fetch existing photos to append
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('profile_photos_urls, profile_photo_url')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
 
-      const { error: uploadError, data } = await supabase.storage
-        .from('profile-photos')
-        .upload(filePath, file, { upsert: true });
+      const uploadedUrls: string[] = [];
 
-      if (uploadError) throw uploadError;
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(filePath);
+        const { error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .upload(filePath, file, { upsert: true });
+        if (uploadError) throw uploadError;
 
-      // Update profile
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      // Update profile photos array and primary photo
+      const existingList: string[] = Array.isArray(profileData?.profile_photos_urls)
+        ? (profileData!.profile_photos_urls as any)
+        : [];
+      const newList = [...existingList, ...uploadedUrls];
+      const newPrimary = uploadedUrls[uploadedUrls.length - 1] || profileData?.profile_photo_url || null;
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ profile_photo_url: publicUrl })
+        .update({ profile_photos_urls: newList, profile_photo_url: newPrimary })
         .eq('id', user.id);
-
       if (updateError) throw updateError;
 
-      onPhotoUploaded(publicUrl);
-      toast.success("Photo uploaded successfully!");
+      // Update preview with the last uploaded photo
+      setPreview(newPrimary);
+      onPhotoUploaded(newPrimary || "");
+      toast.success(files.length > 1 ? "Photos uploaded!" : "Photo uploaded!");
     } catch (error) {
-      console.error("Error uploading photo:", error);
-      toast.error("Failed to upload photo");
+      console.error("Error uploading photo(s):", error);
+      toast.error("Failed to upload photo(s)");
       setPreview(currentPhotoUrl || null);
     } finally {
       setUploading(false);
+      // reset input value to allow re-uploading the same file if desired
+      event.currentTarget.value = '';
     }
   };
 
@@ -139,7 +154,7 @@ export const PhotoUpload = ({ onPhotoUploaded, currentPhotoUrl }: PhotoUploadPro
             >
               <span className="cursor-pointer">
                 <Upload className="w-4 h-4 mr-2" />
-                {uploading ? "Uploading..." : preview ? "Change Photo" : "Upload Photo"}
+                {uploading ? "Uploading..." : preview ? "Add/Change Photos" : "Upload Photos"}
               </span>
             </Button>
           </label>
@@ -147,6 +162,7 @@ export const PhotoUpload = ({ onPhotoUploaded, currentPhotoUrl }: PhotoUploadPro
             id="photo-upload"
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
             onChange={handleFileSelect}
             disabled={uploading}
