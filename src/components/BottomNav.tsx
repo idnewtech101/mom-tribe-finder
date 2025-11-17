@@ -19,7 +19,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
       <div className="max-w-screen-xl mx-auto flex justify-around items-center h-16 px-2">
-        {navItems.map(({ path, icon: Icon, label, badge }) => {
+        {navItems.map(({ path, icon: Icon, label }) => {
           const isActive = location.pathname === path;
           return (
             <Link
@@ -32,17 +32,7 @@ export default function BottomNav() {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <div className="relative">
-                <Icon className={cn("w-5 h-5", isActive && "fill-primary")} />
-                {badge && badge > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
-                  >
-                    {badge > 9 ? '9+' : badge}
-                  </Badge>
-                )}
-              </div>
+              <Icon className={cn("w-5 h-5", isActive && "fill-primary")} />
               <span className="text-xs font-medium">{label}</span>
             </Link>
           );
