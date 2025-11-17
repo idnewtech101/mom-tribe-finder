@@ -485,12 +485,12 @@ export default function Profile() {
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {profile.children.map((child: any, idx: number) => (
-                    <div 
-                      key={idx}
-                      className="bg-gradient-to-br from-pink-100 to-purple-100 border-2 border-pink-200 rounded-full px-4 py-2 flex items-center gap-2 shadow-md transform hover:scale-105 transition-transform"
-                    >
-                      <span className="text-lg">{child.gender === 'girl' ? '👧' : child.gender === 'boy' ? '👦' : '👶'}</span>
-                      <span className="text-sm font-medium text-foreground">
+                  <div 
+                    key={idx}
+                    className="bg-gradient-to-br from-pink-100 to-purple-100 border-2 border-pink-200 rounded-full px-2 py-1 flex items-center gap-1 shadow-sm transform hover:scale-105 transition-transform"
+                  >
+                    <span className="text-sm">{child.gender === 'girl' ? '👧' : child.gender === 'boy' ? '👦' : '👶'}</span>
+                    <span className="text-xs font-medium text-foreground">
                         {child.gender === 'girl' ? (language === "el" ? 'Κορίτσι' : 'Girl') 
                           : child.gender === 'boy' ? (language === "el" ? 'Αγόρι' : 'Boy')
                           : (language === "el" ? 'Μωρό' : 'Baby')}
