@@ -21,6 +21,7 @@ import PrivacyTerms from "./pages/PrivacyTerms";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import AuthGuard from "./components/AuthGuard";
+import MomAlerts from "./components/MomAlerts";
 
 const queryClient = new QueryClient();
 
@@ -37,14 +38,14 @@ const App = () => (
           <Route path="/profile-setup" element={<AuthGuard><ProfileSetup /></AuthGuard>} />
           <Route path="/photo-verification" element={<AuthGuard><PhotoVerification /></AuthGuard>} />
           <Route path="/admin" element={<AuthGuard><Admin /></AuthGuard>} />
-          <Route path="/discover" element={<AuthGuard><><Discover /><BottomNav /></></AuthGuard>} />
-          <Route path="/chats" element={<AuthGuard><><Chats /><BottomNav /></></AuthGuard>} />
+          <Route path="/discover" element={<AuthGuard><><Discover /><MomAlerts /><BottomNav /></></AuthGuard>} />
+          <Route path="/chats" element={<AuthGuard><><Chats /><MomAlerts /><BottomNav /></></AuthGuard>} />
           <Route path="/chat/:matchId" element={<AuthGuard><ChatView /></AuthGuard>} />
-          <Route path="/ask-moms" element={<AuthGuard><><AskMoms /><BottomNav /></></AuthGuard>} />
-          <Route path="/daily-boost" element={<AuthGuard><><DailyBoost /><BottomNav /></></AuthGuard>} />
-          <Route path="/notifications" element={<AuthGuard><><Notifications /><BottomNav /></></AuthGuard>} />
-          <Route path="/marketplace" element={<AuthGuard><><Marketplace /><BottomNav /></></AuthGuard>} />
-          <Route path="/profile" element={<AuthGuard><><Profile /><BottomNav /></></AuthGuard>} />
+          <Route path="/ask-moms" element={<AuthGuard><><AskMoms /><MomAlerts /><BottomNav /></></AuthGuard>} />
+          <Route path="/daily-boost" element={<AuthGuard><><DailyBoost /><MomAlerts /><BottomNav /></></AuthGuard>} />
+          <Route path="/notifications" element={<AuthGuard><><Notifications /><MomAlerts /><BottomNav /></></AuthGuard>} />
+          <Route path="/marketplace" element={<AuthGuard><><Marketplace /><MomAlerts /><BottomNav /></></AuthGuard>} />
+          <Route path="/profile" element={<AuthGuard><><Profile /><MomAlerts /><BottomNav /></></AuthGuard>} />
           <Route path="/privacy-terms" element={<PrivacyTerms />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

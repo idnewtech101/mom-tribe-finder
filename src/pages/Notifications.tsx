@@ -154,10 +154,10 @@ export default function Notifications() {
           <div className="flex items-center gap-3">
             <Bell className="w-8 h-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
+              <h1 className="text-3xl font-bold text-foreground">Mom Alerts 💞</h1>
               {unreadCount > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+                  {unreadCount} unread alert{unreadCount !== 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -180,14 +180,14 @@ export default function Notifications() {
           <div className="space-y-3">
             {loading ? (
               <Card className="p-6 text-center">
-                <p className="text-muted-foreground">Loading notifications...</p>
+                <p className="text-muted-foreground">Loading mom alerts...</p>
               </Card>
             ) : notifications.length === 0 ? (
               <Card className="p-12 text-center">
                 <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">No notifications yet</h3>
+                <h3 className="text-xl font-semibold text-foreground mb-2">No mom alerts yet</h3>
                 <p className="text-muted-foreground">
-                  You'll see notifications here when you get matches, messages, and more!
+                  You'll see mom alerts here when you get matches, messages, and more!
                 </p>
               </Card>
             ) : (
