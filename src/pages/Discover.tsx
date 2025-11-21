@@ -301,6 +301,42 @@ export default function Discover() {
             </div>
           </Button>
         </div>
+
+        {/* Mompreneur of the Week Section */}
+        <Card className="mt-8 overflow-hidden border-2 border-pink-200/50 bg-gradient-to-br from-background to-pink-50/30 shadow-lg">
+          <div className="relative p-6">
+            {/* Floral decorative corners */}
+            <div className="absolute top-2 right-2 text-4xl opacity-30">🌸</div>
+            <div className="absolute bottom-2 left-2 text-3xl opacity-20">🌺</div>
+            
+            <div className="text-center space-y-4">
+              <h2 className="text-xl font-bold text-foreground flex items-center justify-center gap-2" style={{ fontFamily: "'Pacifico', cursive" }}>
+                🌸 Mompreneur of the Week
+              </h2>
+              
+              <Badge variant="secondary" className="bg-pink-100 text-pink-600 border-pink-200">
+                Coming Soon 🌸
+              </Badge>
+              
+              <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-pink-200 shadow-md">
+                <img 
+                  src={mascot} 
+                  alt="Momster Mascot" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <p className="text-sm text-muted-foreground leading-relaxed px-4">
+                Κάθε εβδομάδα θα παρουσιάζουμε μια μανούλα από την κοινότητά μας που είναι boss lady, 
+                δημιουργική, career-driven ή έχει το δικό της project. Μείνε συντονισμένη!
+              </p>
+              
+              <div className="flex justify-center gap-1 text-xl">
+                💼✨👑💕
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Footer */}
