@@ -74,10 +74,6 @@ const Index = () => {
             />
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold mb-3 text-primary leading-tight animate-fade-in" style={{ fontFamily: "'Pacifico', cursive" }}>
-            Momster
-          </h1>
-          
           <p className="text-xl text-foreground mb-6 font-medium">
             {t('heroTagline')}
           </p>
@@ -100,19 +96,6 @@ const Index = () => {
             >
               {t('learnMore')}
             </Button>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Events Banner */}
-      <section className="py-3 px-4 bg-gradient-to-r from-pink-200 via-purple-200 to-pink-200">
-        <div className="container mx-auto text-center">
-          <div className="flex items-center justify-center gap-2">
-            <Calendar className="h-5 w-5 text-primary animate-pulse" />
-            <p className="text-sm font-semibold text-foreground">
-              🎉 Join Momster Events Coming Soon! 🎉
-            </p>
           </div>
         </div>
       </section>
