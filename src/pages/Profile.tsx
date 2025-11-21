@@ -484,20 +484,27 @@ export default function Profile() {
                   {language === "el" ? "🎈 Μαμά σε:" : "🎈 Mom to:"}
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {profile.children.map((child: any, idx: number) => (
-                  <div 
-                    key={idx}
-                    className="bg-gradient-to-br from-pink-200 to-purple-200 border-2 border-pink-300 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-md transform hover:scale-105 transition-transform"
-                  >
-                    <span className="text-base">{child.gender === 'girl' ? '👧' : child.gender === 'boy' ? '👦' : '👶'}</span>
-                    <span className="text-xs font-bold text-primary">
-                        {child.gender === 'girl' ? (language === "el" ? 'Κορίτσι' : 'Girl') 
-                          : child.gender === 'boy' ? (language === "el" ? 'Αγόρι' : 'Boy')
-                          : (language === "el" ? 'Μωρό' : 'Baby')}
-                        {child.age && ` — ${child.age}`}
-                      </span>
-                    </div>
-                  ))}
+                  {profile.children.map((child: any, idx: number) => {
+                    // Determine if age needs a unit suffix
+                    const ageStr = child.age?.toString() || '';
+                    const hasUnit = ageStr.includes('μηνών') || ageStr.includes('months') || ageStr.includes('χρονών') || ageStr.includes('years');
+                    const displayAge = hasUnit ? ageStr : (ageStr ? `${ageStr} χρονών` : '');
+                    
+                    return (
+                      <div 
+                        key={idx}
+                        className="bg-gradient-to-br from-pink-200 to-purple-200 border-2 border-pink-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-md transform hover:scale-105 transition-transform"
+                      >
+                        <span className="text-lg">{child.gender === 'girl' ? '👧' : child.gender === 'boy' ? '👦' : '👶'}</span>
+                        <span className="text-sm font-extrabold text-foreground">
+                          {child.gender === 'girl' ? (language === "el" ? 'Κορίτσι' : 'Girl') 
+                            : child.gender === 'boy' ? (language === "el" ? 'Αγόρι' : 'Boy')
+                            : (language === "el" ? 'Μωρό' : 'Baby')}
+                          {displayAge && ` — ${displayAge}`}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

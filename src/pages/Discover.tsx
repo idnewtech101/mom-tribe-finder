@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, X, MapPin, User, Settings } from "lucide-react";
+import { Heart, X, MapPin, User, Settings, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import mascot from "@/assets/mascot.jpg";
 import MomsterMascot from "@/components/MomsterMascot";
@@ -214,7 +214,19 @@ export default function Discover() {
         <Settings className="w-4 h-4" />
       </Button>
 
-      <div className="max-w-md mx-auto pt-20 pb-32">
+      {/* Events Banner */}
+      <section className="fixed top-16 left-0 right-0 z-20 py-3 px-4 bg-gradient-to-r from-pink-200 via-purple-200 to-pink-200">
+        <div className="container mx-auto text-center">
+          <div className="flex items-center justify-center gap-2">
+            <Calendar className="h-5 w-5 text-primary animate-pulse" />
+            <p className="text-sm font-semibold text-foreground">
+              🎉 Join Momster Events Coming Soon! 🎉
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-md mx-auto pt-32 pb-32">
         <h1 className="text-2xl font-bold text-center mb-6 text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
           Ανακάλυψε Μαμάδες
         </h1>
