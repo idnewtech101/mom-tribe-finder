@@ -49,7 +49,7 @@ export const PhotoUpload = ({ onPhotoUploaded, currentPhotoUrl }: PhotoUploadPro
       for (const file of files) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('profile-photos')

@@ -344,13 +344,13 @@ export default function DailyBoost() {
             </h2>
             
             {/* Mood buttons in horizontal row */}
-            <div className="flex justify-center items-center gap-4 flex-wrap">
+            <div className="flex justify-center items-center gap-3 overflow-x-auto pb-2">
               {MOODS.map((mood) => (
                 <button
                   key={mood.emoji}
                   onClick={() => handleMoodSelect(mood.value)}
                   className={`
-                    w-[60px] h-[60px] rounded-full text-3xl
+                    flex-shrink-0 w-[60px] h-[60px] rounded-full text-3xl
                     bg-gradient-to-br from-pink-100 to-purple-100
                     border-2 transition-all duration-200
                     hover:scale-110 hover:shadow-lg
