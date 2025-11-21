@@ -160,7 +160,7 @@ export default function Discover() {
               loop
               muted
               playsInline
-              className="w-full max-w-[250px] mx-auto mb-4 rounded-lg"
+              className="w-full max-w-[200px] mx-auto mb-4 rounded-lg"
             >
               <source src="/videos/mascot-empty-state.mp4" type="video/mp4" />
             </video>
@@ -382,7 +382,7 @@ export default function Discover() {
             autoPlay
             muted
             playsInline
-            className="max-w-sm max-h-[400px] rounded-lg"
+            className="max-w-xs max-h-[300px] rounded-lg"
             onEnded={() => {
               setShowMatchVideo(false);
               showMatch(() => navigate("/chats"));
