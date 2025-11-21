@@ -367,51 +367,49 @@ export default function Profile() {
           {/* Photo Carousel with Floral Frame */}
           <div className="flex flex-col items-center mb-6">
             {profilePhotos.length > 1 ? (
-              <Carousel className="w-full max-w-xs mb-4">
+              <Carousel className="w-full max-w-md mb-6">
                 <CarouselContent>
                   {profilePhotos.map((photo: string, index: number) => (
                     <CarouselItem key={index}>
                         <div className="flex justify-center">
                           <div className="relative">
-                            {/* Floral decorative elements */}
-                            <div className="absolute -top-4 -left-4 text-4xl animate-pulse opacity-80">🌸</div>
-                            <div className="absolute -top-4 -right-4 text-4xl animate-pulse opacity-80" style={{animationDelay: '0.5s'}}>💕</div>
-                            <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse opacity-80" style={{animationDelay: '1s'}}>🌺</div>
-                            <div className="absolute -bottom-4 -right-4 text-4xl animate-pulse opacity-80" style={{animationDelay: '1.5s'}}>💗</div>
+                            {/* Enhanced Floral Background Glow */}
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-300/70 via-purple-300/70 to-pink-300/70 blur-3xl animate-pulse" style={{ width: '340px', height: '340px', margin: '-20px' }} />
                             
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-300/60 via-purple-300/60 to-pink-300/60 blur-3xl animate-pulse" />
-                            <Avatar className="w-48 h-48 border-[8px] border-white shadow-2xl relative z-10" style={{
-                              boxShadow: '0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 6px rgba(236, 72, 153, 0.5), 0 0 0 10px rgba(219, 39, 119, 0.3), 0 0 40px rgba(219, 39, 119, 0.6)'
+                            {/* Main Avatar with Enhanced Border */}
+                            <Avatar className="w-72 h-72 border-[12px] border-white shadow-2xl relative z-10" style={{
+                              boxShadow: '0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 8px rgba(236, 72, 153, 0.6), 0 0 0 14px rgba(219, 39, 119, 0.4), 0 0 60px rgba(219, 39, 119, 0.7)',
+                              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9))'
                             }}>
                               <AvatarImage src={photo} alt={`${profile.full_name} ${index + 1}`} className="object-cover" />
-                              <AvatarFallback>{profile.full_name?.[0]}</AvatarFallback>
+                              <AvatarFallback className="text-6xl">{profile.full_name?.[0]}</AvatarFallback>
                             </Avatar>
-                          {frameStyle === 'flowers' && (
-                            <>
-                              <div className="absolute -top-4 -right-4 text-5xl animate-bounce drop-shadow-lg">🌸</div>
-                              <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse drop-shadow-lg">🌺</div>
-                              <div className="absolute top-0 -left-4 text-3xl animate-bounce delay-100 drop-shadow-lg">🌼</div>
-                              <div className="absolute -bottom-4 -right-4 text-3xl animate-pulse delay-200 drop-shadow-lg">🌷</div>
-                            </>
-                          )}
-                          {frameStyle === 'hearts' && (
-                            <>
-                              <div className="absolute -top-4 -right-4 text-5xl animate-bounce drop-shadow-lg">💖</div>
-                              <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse drop-shadow-lg">💕</div>
-                              <div className="absolute top-0 -left-4 text-3xl animate-bounce delay-100 drop-shadow-lg">💗</div>
-                              <div className="absolute -bottom-4 -right-4 text-3xl animate-pulse delay-200 drop-shadow-lg">💝</div>
-                            </>
-                          )}
-                          {frameStyle === 'momster' && (
-                            <>
-                              <div className="absolute -top-4 -right-4 text-4xl animate-bounce drop-shadow-lg">👶</div>
-                              <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse drop-shadow-lg">🤱</div>
-                              <div className="absolute top-0 -left-4 text-3xl animate-bounce delay-100 drop-shadow-lg">🍼</div>
-                              <div className="absolute -bottom-4 -right-4 text-3xl animate-pulse delay-200 drop-shadow-lg">👪</div>
-                            </>
-                          )}
+                            
+                            {/* Enhanced Floral Frame - Always Visible */}
+                            <div className="absolute -top-8 -right-8 text-7xl animate-bounce drop-shadow-2xl z-20">🌸</div>
+                            <div className="absolute -bottom-8 -left-8 text-6xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.3s' }}>🌺</div>
+                            <div className="absolute top-4 -left-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.6s' }}>🌼</div>
+                            <div className="absolute -bottom-8 -right-8 text-5xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.9s' }}>🌷</div>
+                            <div className="absolute -top-8 left-12 text-4xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.2s' }}>🌹</div>
+                            <div className="absolute bottom-12 -right-8 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.5s' }}>🌻</div>
+                            <div className="absolute top-12 -right-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.7s' }}>💐</div>
+                            <div className="absolute -bottom-8 left-12 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '1s' }}>🏵️</div>
+                            
+                            {/* Optional Additional Frame Styles */}
+                            {frameStyle === 'hearts' && (
+                              <>
+                                <div className="absolute -top-6 right-4 text-6xl animate-bounce drop-shadow-lg z-20">💖</div>
+                                <div className="absolute bottom-4 -left-6 text-5xl animate-pulse drop-shadow-lg z-20">💕</div>
+                              </>
+                            )}
+                            {frameStyle === 'momster' && (
+                              <>
+                                <div className="absolute top-0 right-0 text-5xl animate-bounce drop-shadow-lg z-20">👶</div>
+                                <div className="absolute bottom-0 left-0 text-5xl animate-pulse drop-shadow-lg z-20">🤱</div>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -419,36 +417,40 @@ export default function Profile() {
                 <CarouselNext className="right-2" />
               </Carousel>
             ) : (
-              <div className="relative mb-4">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-300/60 via-purple-300/60 to-pink-300/60 blur-3xl animate-pulse" />
-                <Avatar className="w-48 h-48 border-[8px] border-white shadow-2xl relative z-10" style={{
-                  boxShadow: '0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 6px rgba(236, 72, 153, 0.5), 0 0 0 10px rgba(219, 39, 119, 0.3), 0 0 40px rgba(219, 39, 119, 0.6)'
+              <div className="relative mb-6">
+                {/* Floral Background Glow */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-300/70 via-purple-300/70 to-pink-300/70 blur-3xl animate-pulse" style={{ width: '340px', height: '340px', margin: '-20px' }} />
+                
+                {/* Main Avatar with Enhanced Border */}
+                <Avatar className="w-72 h-72 border-[12px] border-white shadow-2xl relative z-10" style={{
+                  boxShadow: '0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 8px rgba(236, 72, 153, 0.6), 0 0 0 14px rgba(219, 39, 119, 0.4), 0 0 60px rgba(219, 39, 119, 0.7)',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9))'
                 }}>
                   <AvatarImage src={profilePhotos[0]} alt={profile.full_name} className="object-cover" />
-                  <AvatarFallback>{profile.full_name?.[0]}</AvatarFallback>
+                  <AvatarFallback className="text-6xl">{profile.full_name?.[0]}</AvatarFallback>
                 </Avatar>
-                {frameStyle === 'flowers' && (
-                  <>
-                    <div className="absolute -top-4 -right-4 text-5xl animate-bounce drop-shadow-lg">🌸</div>
-                    <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse drop-shadow-lg">🌺</div>
-                    <div className="absolute top-0 -left-4 text-3xl animate-bounce delay-100 drop-shadow-lg">🌼</div>
-                    <div className="absolute -bottom-4 -right-4 text-3xl animate-pulse delay-200 drop-shadow-lg">🌷</div>
-                  </>
-                )}
+                
+                {/* Enhanced Floral Frame - Always Visible */}
+                <div className="absolute -top-8 -right-8 text-7xl animate-bounce drop-shadow-2xl z-20">🌸</div>
+                <div className="absolute -bottom-8 -left-8 text-6xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.3s' }}>🌺</div>
+                <div className="absolute top-4 -left-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.6s' }}>🌼</div>
+                <div className="absolute -bottom-8 -right-8 text-5xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.9s' }}>🌷</div>
+                <div className="absolute -top-8 left-12 text-4xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.2s' }}>🌹</div>
+                <div className="absolute bottom-12 -right-8 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.5s' }}>🌻</div>
+                <div className="absolute top-12 -right-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.7s' }}>💐</div>
+                <div className="absolute -bottom-8 left-12 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '1s' }}>🏵️</div>
+                
+                {/* Optional Additional Frame Styles */}
                 {frameStyle === 'hearts' && (
                   <>
-                    <div className="absolute -top-4 -right-4 text-5xl animate-bounce drop-shadow-lg">💖</div>
-                    <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse drop-shadow-lg">💕</div>
-                    <div className="absolute top-0 -left-4 text-3xl animate-bounce delay-100 drop-shadow-lg">💗</div>
-                    <div className="absolute -bottom-4 -right-4 text-3xl animate-pulse delay-200 drop-shadow-lg">💝</div>
+                    <div className="absolute -top-6 right-4 text-6xl animate-bounce drop-shadow-lg z-20">💖</div>
+                    <div className="absolute bottom-4 -left-6 text-5xl animate-pulse drop-shadow-lg z-20">💕</div>
                   </>
                 )}
                 {frameStyle === 'momster' && (
                   <>
-                    <div className="absolute -top-4 -right-4 text-4xl animate-bounce drop-shadow-lg">👶</div>
-                    <div className="absolute -bottom-4 -left-4 text-4xl animate-pulse drop-shadow-lg">🤱</div>
-                    <div className="absolute top-0 -left-4 text-3xl animate-bounce delay-100 drop-shadow-lg">🍼</div>
-                    <div className="absolute -bottom-4 -right-4 text-3xl animate-pulse delay-200 drop-shadow-lg">👪</div>
+                    <div className="absolute top-0 right-0 text-5xl animate-bounce drop-shadow-lg z-20">👶</div>
+                    <div className="absolute bottom-0 left-0 text-5xl animate-pulse drop-shadow-lg z-20">🤱</div>
                   </>
                 )}
               </div>

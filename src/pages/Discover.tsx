@@ -9,6 +9,8 @@ import mascot from "@/assets/mascot.jpg";
 import MomsterMascot from "@/components/MomsterMascot";
 import { useMascot } from "@/hooks/use-mascot";
 import { useMatching } from "@/hooks/use-matching";
+import ThisOrThat from "@/components/ThisOrThat";
+import MagicMatching from "@/components/MagicMatching";
 
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -215,7 +217,7 @@ export default function Discover() {
       </Button>
 
       {/* Events Banner */}
-      <section className="fixed top-16 left-0 right-0 z-20 py-3 px-4 bg-gradient-to-r from-pink-200 via-purple-200 to-pink-200">
+      <section className="fixed top-16 left-0 right-0 z-20 py-3 px-4 bg-gradient-to-r from-pink-200 via-purple-200 to-pink-200 shadow-md">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center gap-2">
             <Calendar className="h-5 w-5 text-primary animate-pulse" />
@@ -226,10 +228,20 @@ export default function Discover() {
         </div>
       </section>
 
-      <div className="max-w-md mx-auto pt-32 pb-32">
-        <h1 className="text-2xl font-bold text-center mb-6 text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+      <div className="max-w-md mx-auto pt-32 pb-32 space-y-6">
+        <h1 className="text-2xl font-bold text-center mb-2 text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
           Ανακάλυψε Μαμάδες
         </h1>
+
+        {/* This or That Polls */}
+        <div className="mb-4">
+          <ThisOrThat />
+        </div>
+
+        {/* Magic Matching Button */}
+        <div className="mb-6 flex justify-center">
+          <MagicMatching />
+        </div>
 
         <Card 
           ref={cardRef}
