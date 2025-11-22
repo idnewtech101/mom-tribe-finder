@@ -322,10 +322,23 @@ export default function Discover() {
           </div>
 
           <div className="p-6 space-y-4">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-primary" />
-              <span className="font-medium">{getChildrenText()}</span>
-            </div>
+            {/* Children Info with Icons */}
+            {currentProfile.children && Array.isArray(currentProfile.children) && currentProfile.children.length > 0 && (
+              <div className="bg-gradient-to-br from-pink-50 to-purple-50 p-3 rounded-lg border border-pink-200">
+                <div className="flex items-center gap-2 text-sm mb-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="font-bold text-foreground">Παιδιά:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentProfile.children.map((child: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-1 bg-white/80 px-2 py-1 rounded-full text-xs">
+                      <span>{child.gender === 'boy' ? '👦' : child.gender === 'girl' ? '👧' : '👶'}</span>
+                      <span className="font-medium">{child.ageGroup || child.age}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {currentProfile.bio && (
               <p className="text-sm text-foreground/90 font-medium">{currentProfile.bio}</p>

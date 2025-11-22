@@ -73,24 +73,40 @@ export default function MomsterMascot({
   if (!isShowing) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
-      <Card className="max-w-md w-full p-6 bg-gradient-to-br from-primary/10 via-background to-secondary/20 border-2 border-primary/30 shadow-xl animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md animate-fade-in">
+      <Card className="max-w-md w-full p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 border-4 border-pink-200 shadow-2xl rounded-3xl animate-[scale-in_0.3s_ease-out,bounce_0.5s_ease-out_0.3s]">
         <div className="flex flex-col items-center text-center space-y-4">
+          {/* Multiple small mascots around the main one */}
           <div className="relative">
+            {/* Floating mini mascots */}
+            <div className="absolute -top-8 -left-8 animate-bounce" style={{ animationDelay: '0s' }}>
+              <img src={mascot} alt="Mini Mascot" className="w-8 h-8 object-contain opacity-70" />
+            </div>
+            <div className="absolute -top-8 -right-8 animate-bounce" style={{ animationDelay: '0.2s' }}>
+              <img src={mascot} alt="Mini Mascot" className="w-8 h-8 object-contain opacity-70" />
+            </div>
+            <div className="absolute -bottom-6 -left-8 animate-bounce" style={{ animationDelay: '0.4s' }}>
+              <img src={mascot} alt="Mini Mascot" className="w-8 h-8 object-contain opacity-70" />
+            </div>
+            <div className="absolute -bottom-6 -right-8 animate-bounce" style={{ animationDelay: '0.6s' }}>
+              <img src={mascot} alt="Mini Mascot" className="w-8 h-8 object-contain opacity-70" />
+            </div>
+            
+            {/* Main mascot */}
             <img
               src={mascot}
               alt="Momster Mascot"
               className={cn(
-                "w-24 h-24 object-contain",
+                "w-24 h-24 object-contain drop-shadow-xl",
                 getAnimationClass(state)
               )}
             />
-            <span className="absolute -top-2 -right-2 text-3xl animate-bounce">
+            <span className="absolute -top-2 -right-2 text-4xl animate-bounce drop-shadow-lg">
               {getEmoji(state)}
             </span>
           </div>
           
-          <p className="text-lg font-medium text-foreground leading-relaxed">
+          <p className="text-xl font-bold text-foreground leading-relaxed" style={{ fontFamily: "'Pacifico', cursive" }}>
             {message}
           </p>
 
@@ -100,7 +116,7 @@ export default function MomsterMascot({
                 setIsShowing(false);
                 onButtonClick?.();
               }}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-bold shadow-lg hover:shadow-xl transition-all rounded-full"
               size="lg"
             >
               {buttonText}

@@ -160,7 +160,7 @@ export default function ChatView() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 flex flex-col">
       {/* Header */}
-      <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+      <div className="bg-card border-b border-border px-4 py-4 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -169,13 +169,19 @@ export default function ChatView() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
 
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={otherUser?.profile_photo_url} />
-          <AvatarFallback>{otherUser?.full_name?.[0] || "M"}</AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          {/* Floral outline */}
+          <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-pink-200 via-purple-200 to-pink-300 animate-pulse" />
+          <Avatar className="w-12 h-12 relative border-2 border-white shadow-md">
+            <AvatarImage src={otherUser?.profile_photo_url} className="object-cover" />
+            <AvatarFallback className="bg-gradient-to-br from-pink-100 to-purple-100">
+              {otherUser?.full_name?.[0] || "M"}
+            </AvatarFallback>
+          </Avatar>
+        </div>
 
         <div className="flex-1">
-          <h2 className="font-semibold text-foreground">{otherUser?.full_name}</h2>
+          <h2 className="font-bold text-base text-foreground">{otherUser?.full_name}</h2>
           <p className="text-xs text-muted-foreground">{otherUser?.area}</p>
         </div>
 

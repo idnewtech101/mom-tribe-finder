@@ -258,32 +258,39 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Mompreneur Section */}
-      <section id="mompreneur" className="py-16 px-4 bg-gradient-to-br from-purple-50 to-pink-50">
+      {/* Mompreneur Section - Enhanced Visibility */}
+      <section id="mompreneur" className="py-20 px-4 bg-gradient-to-br from-purple-100 via-pink-100 to-purple-200">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-3 text-primary" style={{ fontFamily: "'Pacifico', cursive" }}>
-              Mompreneur
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold mb-4 text-purple-800" style={{ fontFamily: "'Pacifico', cursive" }}>
+              💼 Mompreneur 💼
             </h2>
-            <p className="text-base text-muted-foreground">
+            <p className="text-lg font-semibold text-purple-700">
               Υποστήριξη για μαμάδες επιχειρηματίες - Coming Soon
             </p>
           </div>
-          <Card className="bg-gradient-to-br from-purple-100 to-pink-100 border-none hover:shadow-xl transition-all relative overflow-hidden">
-            <div className="absolute top-4 right-4">
-              <Badge variant="secondary" className="bg-purple-200 text-purple-700">Coming Soon</Badge>
+          <Card className="bg-gradient-to-br from-white via-pink-50 to-purple-50 border-4 border-purple-300 hover:shadow-2xl transition-all relative overflow-hidden">
+            <div className="absolute top-6 right-6 z-10">
+              <Badge variant="secondary" className="bg-purple-300 text-purple-900 text-sm font-bold px-4 py-2 shadow-lg">
+                Coming Soon
+              </Badge>
             </div>
-            <CardContent className="p-8 relative overflow-hidden">
-              <div className="absolute top-4 right-24 opacity-10">
+            <CardContent className="p-10 relative overflow-hidden">
+              {/* Animated mascots in background */}
+              <div className="absolute top-8 right-32 opacity-20 animate-bounce">
+                <img src={mascot} alt="Mompreneur Mascot" className="w-24 h-24 object-contain" />
+              </div>
+              <div className="absolute bottom-8 left-8 opacity-15 animate-pulse">
                 <img src={mascot} alt="Mompreneur Mascot" className="w-20 h-20 object-contain" />
               </div>
-              <div className="text-primary mb-4">{features[6].icon}</div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground">
+              
+              <div className="text-purple-600 mb-6 text-5xl">{features[6].icon}</div>
+              <h3 className="text-3xl font-bold mb-4 text-purple-900">
                 Υποστήριξη για Mompreneurs
               </h3>
-              <p className="text-muted-foreground text-base max-w-2xl">
+              <p className="text-purple-800 text-lg font-medium max-w-2xl leading-relaxed">
                 Χτίζουμε έναν χώρο ειδικά για μαμάδες που ξεκινούν ή τρέχουν τη δική τους επιχείρηση - με networking,
-                συνεργασίες και πρακτικά tips.
+                συνεργασίες και πρακτικά tips. 🚀✨
               </p>
             </CardContent>
           </Card>
