@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, Calendar, ShoppingBag, Users, MapPin, UtensilsCrossed, Settings } from "lucide-react";
-import logoFull from "@/assets/logo-full.jpg";
+import communityLogo from "@/assets/community-logo.jpg";
 import mascot from "@/assets/mascot.jpg";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ThisOrThat from "@/components/ThisOrThat";
@@ -75,9 +75,9 @@ const Index = () => {
         <div className="container mx-auto text-center max-w-5xl">
           <div className="mb-6 flex justify-center">
             <img 
-              src={logoFull} 
-              alt="Momster Logo" 
-              className="w-64 h-64 object-contain animate-scale-in drop-shadow-xl rounded-full bg-gradient-to-br from-pink-50 to-purple-50 p-4" 
+              src={communityLogo} 
+              alt="Momster Community" 
+              className="w-80 h-80 object-contain animate-scale-in drop-shadow-xl" 
             />
           </div>
           
@@ -272,8 +272,18 @@ const Index = () => {
       </section>
 
       {/* Enhanced Footer */}
-      <footer className="py-10 px-4 border-t border-border bg-gradient-to-br from-background to-secondary/20">
-        <div className="container mx-auto max-w-6xl">
+      <footer className="py-10 px-4 border-t border-border bg-gradient-to-br from-background to-secondary/20 relative overflow-hidden">
+        {/* Scattered small community icons */}
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          <img src={communityLogo} alt="" className="absolute top-4 left-8 w-12 h-12 object-contain animate-float" />
+          <img src={communityLogo} alt="" className="absolute top-16 right-16 w-16 h-16 object-contain animate-bounce" style={{ animationDelay: '0.5s' }} />
+          <img src={communityLogo} alt="" className="absolute bottom-8 left-20 w-14 h-14 object-contain animate-float" style={{ animationDelay: '1s' }} />
+          <img src={communityLogo} alt="" className="absolute bottom-16 right-24 w-12 h-12 object-contain animate-bounce" style={{ animationDelay: '1.5s' }} />
+          <img src={communityLogo} alt="" className="absolute top-1/2 left-1/4 w-10 h-10 object-contain animate-float" style={{ animationDelay: '2s' }} />
+          <img src={communityLogo} alt="" className="absolute top-1/3 right-1/3 w-14 h-14 object-contain animate-bounce" style={{ animationDelay: '2.5s' }} />
+        </div>
+        
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             {/* Brand Section */}
             <div className="text-center md:text-left">
