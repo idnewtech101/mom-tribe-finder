@@ -12,7 +12,7 @@ export default function BottomNav() {
 
   const navItems = [
     { path: "/discover", icon: Heart, label: "Find a New Friend" },
-    { path: "/ask-moms", icon: MessageCircle, label: "Ρώτα μία μαμά" },
+    { path: "/chats", icon: MessageCircle, label: "Chat", badge: unreadCount },
     { path: "/daily-boost", icon: Sparkles, label: "Momster Home" },
     { path: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
     { path: "/profile", icon: User, label: "Profile" },
@@ -21,8 +21,8 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-50/95 to-purple-50/95 backdrop-blur-md border-t-2 border-primary/30 z-50 px-2 py-2 shadow-lg">
       <div className="max-w-screen-xl mx-auto flex justify-around items-center gap-1">
-        {navItems.map(({ path, icon: Icon, label }) => {
-          const isActive = location.pathname === path;
+        {navItems.map(({ path, icon: Icon, label, badge }) => {
+          const isActive = location.pathname === path || location.pathname.startsWith(path + '/');
           return (
             <Link
               key={path}
@@ -34,7 +34,16 @@ export default function BottomNav() {
                   : "text-primary hover:text-primary hover:bg-white/50 border-2 border-transparent"
               )}
             >
-              <Icon className={cn("w-5 h-5", isActive && "fill-white")} />
+              <div className="relative">
+                <Icon className={cn("w-5 h-5", isActive && "fill-white")} />
+                {badge && badge > 0 && (
+                  <Badge 
+                    className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-rose-500 text-white"
+                  >
+                    {badge > 9 ? '9+' : badge}
+                  </Badge>
+                )}
+              </div>
               <span className="text-[10px] font-bold text-center leading-tight">{label}</span>
             </Link>
           );
