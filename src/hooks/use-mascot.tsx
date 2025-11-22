@@ -11,9 +11,9 @@ interface MascotConfig {
 }
 
 const welcomeMessages = [
-  "Welcome back, super mama! 💕",
-  "Yay! You're here! 🌸",
-  "Hello beautiful mama! 💗",
+  "Καλώς ήρθες στο Momster! 🌸\nΗ τέλεια κοινότητα για μαμάδες σαν κι εσένα.\nΠάμε να βρούμε το επόμενο match σου; ✨",
+  "Welcome to Momster! 🌸\nΤhe perfect community for moms like you.\nLet's find your next match! ✨",
+  "Yay! You're here mama! 💕\nReady to meet amazing moms? 🌸",
 ];
 
 const matchMessages = [
