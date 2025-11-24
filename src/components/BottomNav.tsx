@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Search, MessageCircle, ShoppingBag, User, Sparkles } from "lucide-react";
+import { Search, MessageCircle, ShoppingBag, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import mascot from "@/assets/mascot.jpg";
@@ -11,7 +11,7 @@ export default function BottomNav() {
   const navItems = [
     { path: "/discover", icon: Search, label: "Find a mom friend" },
     { path: "/chats", icon: MessageCircle, label: "Chat", badge: unreadCount },
-    { path: "/daily-boost", icon: Sparkles, label: "Momster Home", isCenter: true },
+    { path: "/daily-boost", label: "Momster Home", isCenter: true, isMascot: true },
     { path: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
     { path: "/profile", icon: User, label: "Profile" },
   ];
@@ -19,7 +19,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md z-50 py-3 shadow-[0_-2px_20px_rgba(0,0,0,0.08)]">
       <div className="max-w-screen-xl mx-auto flex justify-center items-end gap-2 px-4">
-        {navItems.map(({ path, icon: Icon, label, badge, isCenter }) => {
+        {navItems.map(({ path, icon: Icon, label, badge, isCenter, isMascot }) => {
           const isActive = location.pathname === path || location.pathname.startsWith(path + '/');
           return (
             <Link
@@ -35,10 +35,14 @@ export default function BottomNav() {
               )}
             >
               <div className="relative">
-                <Icon className={cn(
-                  isCenter ? "w-7 h-7" : "w-6 h-6",
-                  isCenter && "fill-white"
-                )} />
+                {isMascot ? (
+                  <img src={mascot} alt="Momster" className="w-8 h-8 object-contain" />
+                ) : (
+                  Icon && <Icon className={cn(
+                    isCenter ? "w-7 h-7" : "w-6 h-6",
+                    isCenter && "fill-white"
+                  )} />
+                )}
                 {badge && badge > 0 && (
                   <div className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-white" />
                 )}

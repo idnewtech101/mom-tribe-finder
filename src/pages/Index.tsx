@@ -288,10 +288,6 @@ const Index = () => {
               <h3 className="text-3xl font-bold mb-4 text-purple-900">
                 Υποστήριξη για Mompreneurs
               </h3>
-              <p className="text-purple-800 text-lg font-medium max-w-2xl leading-relaxed">
-                Χτίζουμε έναν χώρο ειδικά για μαμάδες που ξεκινούν ή τρέχουν τη δική τους επιχείρηση - με networking,
-                συνεργασίες και πρακτικά tips. 🚀✨
-              </p>
             </CardContent>
           </Card>
         </div>
