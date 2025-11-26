@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MessageCircle, Calendar, ShoppingBag, Users, MapPin, UtensilsCrossed, Settings } from "lucide-react";
 import communityLogo from "@/assets/community-logo.jpg";
-import logo from "@/assets/logo-new.jpg";
+import logo from "@/assets/logo-full.jpg";
 import mascot from "@/assets/mascot.jpg";
 import mompreneurBadge from "@/assets/mompreneur-badge.jpg";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -65,18 +65,20 @@ const Index = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4 relative overflow-hidden">
+      <section className="pt-32 pb-16 px-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
         {/* Large animated mascot with waving animation */}
         <div className="absolute top-10 right-10 hidden lg:block animate-float opacity-90">
-          <img 
-            src={logo} 
-            alt="Momster Logo" 
-            className="w-56 h-56 object-contain drop-shadow-2xl" 
-          />
+          <div className="w-56 h-56 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
+            <img 
+              src={logo} 
+              alt="Momster Logo" 
+              className="w-48 h-48 object-contain drop-shadow-2xl" 
+            />
+          </div>
         </div>
         <div className="container mx-auto text-center max-w-5xl">
           <div className="mb-6 flex flex-col items-center justify-center gap-4">
-            <div className="relative">
+            <div className="relative inline-block p-8 rounded-full" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
               <img 
                 src={logo} 
                 alt="Momster Logo" 
@@ -112,7 +114,7 @@ const Index = () => {
       </section>
 
       {/* Features Section - Grid Layout */}
-      <section id="features" className="py-16 px-4 bg-gradient-to-br from-background via-secondary/20 to-background">
+      <section id="features" className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0, #F8E9EE)' }}>
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-3 text-primary" style={{ fontFamily: "'Pacifico', cursive" }}>
@@ -294,7 +296,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 relative bg-gradient-to-br from-pink-50/50 to-purple-50/50">
+      <section className="py-16 px-4 relative" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
         <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
           <img src={mascot} alt="Mascot" className="w-96 h-96 object-contain" />
         </div>
@@ -314,7 +316,7 @@ const Index = () => {
       </section>
 
       {/* Enhanced Footer */}
-      <footer className="py-10 px-4 border-t border-border bg-gradient-to-br from-background to-secondary/20 relative overflow-hidden">
+      <footer className="py-10 px-4 border-t border-border relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
         {/* Scattered small community icons */}
         <div className="absolute inset-0 pointer-events-none opacity-20">
           <img src={communityLogo} alt="" className="absolute top-4 left-8 w-12 h-12 object-contain animate-float" />
@@ -330,12 +332,10 @@ const Index = () => {
             {/* Brand Section */}
             <div className="text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
-                <img src={mascot} alt="Momster Mascot" className="w-10 h-10 object-contain" />
-                <span className="text-2xl font-bold text-primary" style={{ fontFamily: "'Pacifico', cursive" }}>Momster</span>
+                <div className="inline-block p-2 rounded-full" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
+                  <img src={logo} alt="Momster Logo" className="w-32 h-auto object-contain" />
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Connecting mothers, building communities
-              </p>
             </div>
 
             {/* Quick Links */}
@@ -354,9 +354,6 @@ const Index = () => {
             {/* App Info */}
             <div className="text-center md:text-right">
               <h4 className="font-semibold text-foreground mb-3">Connect</h4>
-              <p className="text-sm text-muted-foreground mb-2">
-                Together, moms thrive! 💕
-              </p>
               <div className="flex items-center justify-center md:justify-end gap-2">
                 <Settings className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">v1.0</span>
@@ -364,8 +361,9 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-border text-center">
+          <div className="pt-6 border-t border-border text-center space-y-2">
             <p className="text-sm text-muted-foreground">{t('footerCopyright')}</p>
+            <p className="text-xs text-muted-foreground">*Momster Perks — free for now, Premium later.</p>
           </div>
         </div>
       </footer>

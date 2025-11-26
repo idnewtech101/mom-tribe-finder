@@ -397,7 +397,7 @@ export default function Discover() {
           <p className="text-xs text-muted-foreground text-center mt-2">Unlimited για αρχή!</p>
         </div>
 
-        <div className="flex justify-center gap-6 mt-6 mb-6"
+        <div className="flex justify-center gap-6 mt-6 mb-6">
           <Button
             size="lg"
             variant="outline"
