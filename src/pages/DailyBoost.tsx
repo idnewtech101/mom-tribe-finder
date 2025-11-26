@@ -241,7 +241,7 @@ export default function DailyBoost() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-rose-50 pt-20 pb-32 px-4 relative overflow-y-auto">
+    <div className="min-h-screen pt-20 pb-32 px-4 relative overflow-y-auto" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0, #F8E9EE)' }}>
       {/* Animated Mascot */}
       <div className="fixed top-20 right-4 z-30 animate-bounce">
         <img src={mascot} alt="Momster Mascot" className="w-20 h-20 object-contain" />
@@ -266,26 +266,24 @@ export default function DailyBoost() {
       )}
       
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
+        {/* Welcome Header */}
+        <div className="text-center space-y-2 mb-8">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2" style={{ fontFamily: "'Pacifico', cursive" }}>
-            <Sparkles className="w-7 h-7 text-primary" />
-            Momster Home
-            <Sparkles className="w-7 h-7 text-primary" />
+            Hi Username 🌸
           </h1>
           <p className="text-sm text-muted-foreground">
-            {language === 'el' ? 'Η καθημερινή σου δόση ενέργειας 🌸' : 'Your daily dose of energy 🌸'}
+            {language === 'el' ? 'Η καθημερινή σου δόση ενέργειας' : 'Your daily dose of energy'}
           </p>
         </div>
 
-        {/* 2 Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 2 Column Grid with Better Spacing */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Main Content (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             {/* Events Banner */}
-            <Card className="p-6 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300 overflow-hidden relative hover:shadow-lg transition-all">
-              <div className="absolute top-2 right-2 bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                Coming Soon
+            <Card className="p-8 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300 overflow-hidden relative hover:shadow-xl transition-all rounded-[25px]">
+              <div className="absolute top-2 right-2 bg-rose-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md">
+                Coming Soon*
               </div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-pink-300/20 rounded-full blur-3xl" />
               <div className="relative flex items-center justify-between">
@@ -305,9 +303,9 @@ export default function DailyBoost() {
             </Card>
 
             {/* Mompreneur Section - Home Tab */}
-            <Card className="p-6 bg-gradient-to-br from-purple-100 via-pink-100 to-purple-200 border-purple-300 overflow-hidden relative hover:shadow-xl transition-all">
-              <div className="absolute top-2 right-2 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                Mompreneur
+            <Card className="p-8 bg-gradient-to-br from-purple-100 via-pink-100 to-purple-200 border-purple-300 overflow-hidden relative hover:shadow-xl transition-all rounded-[25px]">
+              <div className="absolute top-2 right-2 bg-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md">
+                Mompreneur*
               </div>
               <div className="absolute -top-6 -right-6 w-32 h-32 bg-purple-300/30 rounded-full blur-3xl" />
               <div className="absolute -bottom-8 left-4 opacity-20">
@@ -336,7 +334,7 @@ export default function DailyBoost() {
 
             {/* Momster Ταπεράκι */}
             <Link to="/recipes">
-              <Card className="p-6 bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200 hover:shadow-xl transition-all cursor-pointer group">
+              <Card className="p-8 bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200 hover:shadow-xl transition-all cursor-pointer group rounded-[25px]">
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
                     <h2 className="text-xl font-bold text-rose-700 flex items-center gap-2">
@@ -354,7 +352,7 @@ export default function DailyBoost() {
             </Link>
 
             {/* Mood Check */}
-            <Card className="p-6 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300">
+            <Card className="p-8 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300 rounded-[25px]">
               <div className="space-y-5">
                 <h2 className="text-lg font-bold text-foreground text-center">
                   💭 {language === 'el' ? 'Πώς νιώθεις σήμερα;' : 'How are you feeling today?'}
@@ -524,6 +522,21 @@ export default function DailyBoost() {
           </Card>
         </div>
       )}
+      
+      {/* Footer with Premium Message */}
+      <footer className="fixed bottom-20 left-0 right-0 py-4 px-4 bg-[#F8E9EE]/95 backdrop-blur-md border-t border-[#F3DCE5]">
+        <div className="max-w-7xl mx-auto text-center space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <img src={mascot} alt="Momster Mascot" className="w-8 h-8 object-contain" />
+            <span className="text-sm font-medium text-foreground">
+              {language === 'el' ? 'Μαζί, οι μαμάδες ανθίζουν!' : 'Together, moms thrive!'}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            *Momster Perks — free for now, Premium later.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
