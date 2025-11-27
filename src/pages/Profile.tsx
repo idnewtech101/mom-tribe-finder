@@ -1,86 +1,28 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Settings, MapPin, Calendar, MessageCircle, LogOut, Edit, Mail, Heart, ChevronLeft, ChevronRight, Sparkles, Bell, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Settings, LogOut, Sparkles } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
-import floralBg from "@/assets/floral-profile-bg.jpg";
-import MomsterMascot from "@/components/MomsterMascot";
-import { useMascot } from "@/hooks/use-mascot";
+import logo from "@/assets/logo-full.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PhotoUpload } from "@/components/PhotoUpload";
 import { PhotoUploadWithDelete } from "@/components/PhotoUploadWithDelete";
-import { AvatarBuilder, AvatarConfig } from "@/components/AvatarBuilder";
-import { AvatarDisplay } from "@/components/AvatarDisplay";
-import { INTERESTS } from "@/lib/interests";
 
-export default function Profile() {
-  const { mascotConfig, visible, hideMascot } = useMascot();
+export default function ProfileNew() {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const { userId } = useParams();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [photoUploadOpen, setPhotoUploadOpen] = useState(false);
-  const [avatarBuilderOpen, setAvatarBuilderOpen] = useState(false);
-  const [viewAsPublic, setViewAsPublic] = useState(false);
-  const [childrenArray, setChildrenArray] = useState<any[]>([]);
   const [isOwnProfile, setIsOwnProfile] = useState(true);
-  
-  // Edit form states
-  const [editForm, setEditForm] = useState({
-    full_name: "",
-    bio: "",
-    date_of_birth: "",
-    marital_status: "",
-    city: "",
-    area: "",
-  });
-
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [notificationSettings, setNotificationSettings] = useState({
-    email: true,
-    push: true,
-    matches: true,
-    messages: true,
-  });
-  const [privacySettings, setPrivacySettings] = useState({
-    discovery_visible: true,
-    show_last_active: true,
-  });
-  const [childrenInput, setChildrenInput] = useState("");
 
   useEffect(() => {
     fetchProfile();
-    checkAdminRole();
   }, []);
-
-  const checkAdminRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-
-    setIsAdmin(roles?.some(r => r.role === 'admin') || false);
-  };
 
   const fetchProfile = async () => {
     try {
@@ -90,7 +32,6 @@ export default function Profile() {
         return;
       }
 
-      // If userId param exists, fetch that user's profile (public view)
       const profileId = userId || user.id;
       const isOwn = !userId || userId === user.id;
       setIsOwnProfile(isOwn);
@@ -102,32 +43,7 @@ export default function Profile() {
         .single();
 
       if (error) throw error;
-
       setProfile(data);
-      setEditForm({
-        full_name: data.full_name || "",
-        bio: data.bio || "",
-        date_of_birth: data.date_of_birth || "",
-        marital_status: data.marital_status || "",
-        city: data.city || "",
-        area: data.area || "",
-      });
-      setSelectedInterests(data.interests || []);
-      
-      const notifSettings = typeof data.notification_settings === 'object' && data.notification_settings !== null
-        ? data.notification_settings as any
-        : { email: true, push: true, matches: true, messages: true };
-      setNotificationSettings(notifSettings);
-      
-      const privSettings = typeof data.privacy_settings === 'object' && data.privacy_settings !== null
-        ? data.privacy_settings as any
-        : { discovery_visible: true, show_last_active: true };
-      setPrivacySettings(privSettings);
-
-      const childrenInit = Array.isArray(data.children) ? data.children : [];
-      setChildrenArray(childrenInit);
-      setChildrenInput(childrenInit.map((c: any) => String(c.age)).join(", "));
-
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast.error(language === "el" ? "Σφάλμα φόρτωσης προφίλ" : "Error loading profile");
@@ -146,174 +62,14 @@ export default function Profile() {
     }
   };
 
-  // Helpers
-  const toISODate = (input: string): string | null => {
-    if (!input) return null;
-    const s = input.trim();
-    // Normalize separators
-    const norm = s.replace(/[.]/g, '/').replace(/\s+/g, '/');
-    // Patterns: DD/MM/YYYY or DD-MM-YYYY or YYYY-MM-DD
-    const ddmmyyyy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
-    const yyyymmdd = /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/;
-    let y = 0, m = 0, d = 0;
-    if (ddmmyyyy.test(norm)) {
-      const [, dd, mm, yyyy] = norm.match(ddmmyyyy)!;
-      d = parseInt(dd, 10); m = parseInt(mm, 10); y = parseInt(yyyy, 10);
-    } else if (yyyymmdd.test(norm)) {
-      const [, yyyy, mm, dd] = norm.match(yyyymmdd)!;
-      y = parseInt(yyyy, 10); m = parseInt(mm, 10); d = parseInt(dd, 10);
-    } else {
-      return null;
-    }
-    // Basic validation
-    if (y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) return null;
-    const iso = `${y.toString().padStart(4,'0')}-${m.toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    return iso;
-  };
-
-  const parseChildrenAges = (text: string) => {
-    if (!text) return [] as any[];
-    const parts = text.split(/[;,·]/).map(t => t.trim()).filter(Boolean).slice(0, 10);
-    const existingChildren = profile?.children || [];
-    return parts.map((token, idx) => {
-      const cleaned = token.replace(/[<>]/g, '').slice(0, 20);
-      const lower = cleaned.toLowerCase();
-      const numMatch = lower.match(/\d{1,3}/);
-      let age;
-      if (lower.includes('μην')) {
-        // months in Greek
-        age = `${numMatch ? parseInt(numMatch[0], 10) : cleaned} μηνών`;
-      } else if (/\b(m|mo|month|months)\b/.test(lower)) {
-        age = `${numMatch ? parseInt(numMatch[0], 10) : cleaned} months`;
-      } else {
-        // years (number only or text)
-        age = numMatch ? parseInt(numMatch[0], 10) : cleaned;
-      }
-      // Preserve gender from existing data if available
-      const existingGender = existingChildren[idx]?.gender || 'baby';
-      return { age, gender: existingGender };
-    });
-  };
-
-  const handleSaveProfile = async () => {
-    try {
-      const dobISO = editForm.date_of_birth ? toISODate(editForm.date_of_birth) : null;
-      if (editForm.date_of_birth && !dobISO) {
-        toast.error(language === "el" ? "Μη έγκυρη ημερομηνία. Παράδειγμα: 23/05/1987" : "Invalid date. Example: 1987-05-23");
-        return;
-      }
-
-      // Use the updated childrenArray state directly
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: editForm.full_name,
-          bio: editForm.bio,
-          date_of_birth: dobISO,
-          marital_status: editForm.marital_status || null,
-          city: editForm.city,
-          area: editForm.area,
-          interests: selectedInterests,
-          children: childrenArray,
-        })
-        .eq("id", profile.id);
-
-      if (error) throw error;
-
-      toast.success(language === "el" ? "Το προφίλ ενημερώθηκε" : "Profile updated");
-      setEditDialogOpen(false);
-      fetchProfile();
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error(language === "el" ? "Σφάλμα ενημέρωσης προφίλ" : "Error updating profile");
-    }
-  };
-
-  const handleSaveSettings = async () => {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          notification_settings: notificationSettings,
-          privacy_settings: privacySettings,
-        })
-        .eq("id", profile.id);
-
-      if (error) throw error;
-
-      toast.success(language === "el" ? "Οι ρυθμίσεις αποθηκεύτηκαν" : "Settings saved");
-      setSettingsDialogOpen(false);
-      fetchProfile();
-    } catch (error) {
-      console.error("Error updating settings:", error);
-      toast.error(language === "el" ? "Σφάλμα αποθήκευσης ρυθμίσεων" : "Error saving settings");
-    }
-  };
-
-  const toggleInterest = (interestId: string) => {
-    setSelectedInterests(prev =>
-      prev.includes(interestId)
-        ? prev.filter(id => id !== interestId)
-        : [...prev, interestId]
-    );
-  };
-
-  const handleSaveAvatar = async (config: AvatarConfig) => {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          avatar_data: config as any, // Cast to Json
-          profile_photo_url: null // Clear photo URL when using avatar
-        })
-        .eq("id", profile.id);
-
-      if (error) throw error;
-
-      toast.success("Avatar saved!");
-      setAvatarBuilderOpen(false);
-      fetchProfile();
-    } catch (error) {
-      console.error("Error saving avatar:", error);
-      toast.error("Failed to save avatar");
-    }
-  };
-
-  const handlePhotoUploaded = (url: string) => {
+  const handlePhotoUpdate = () => {
     fetchProfile();
-    setPhotoUploadOpen(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">{language === "el" ? "Φόρτωση..." : "Loading..."}</div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">{language === "el" ? "Δεν βρέθηκε προφίλ" : "Profile not found"}</div>
-      </div>
-    );
-  }
-
-  const profilePhotos = profile.profile_photos_urls && profile.profile_photos_urls.length > 0
-    ? profile.profile_photos_urls
-    : profile.profile_photo_url
-    ? [profile.profile_photo_url]
-    : [];
-
-  const displayChildrenArray = Array.isArray(profile.children) ? profile.children : [];
-  const childAges = displayChildrenArray.map((child: any) => child.age).join(", ");
-
-  // Calculate age from date_of_birth
-  const calculateAge = (dateOfBirth: string) => {
-    if (!dateOfBirth) return null;
+  const getAge = () => {
+    if (!profile?.date_of_birth) return null;
+    const birthDate = new Date(profile.date_of_birth);
     const today = new Date();
-    const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -322,710 +78,201 @@ export default function Profile() {
     return age;
   };
 
-  const userAge = calculateAge(profile.date_of_birth);
-
-  // Generate frame style based on profile ID (deterministic)
-  const getFrameStyle = (id: string) => {
-    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const styles = ['flowers', 'hearts', 'momster'];
-    return styles[hash % styles.length];
+  const getChildrenText = () => {
+    if (!profile?.children || !Array.isArray(profile.children) || profile.children.length === 0) {
+      return "Χωρίς πληροφορίες παιδιών";
+    }
+    const childArray = profile.children as any[];
+    return childArray.map((child: any, idx: number) => (
+      <div key={idx} className="flex items-center gap-2">
+        <span>{child.gender === 'boy' ? '👦' : child.gender === 'girl' ? '👧' : '👶'}</span>
+        <span>{child.age || child.ageGroup}</span>
+      </div>
+    ));
   };
 
-  const frameStyle = getFrameStyle(profile.id);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
+        <div className="animate-spin text-4xl">🌸</div>
+      </div>
+    );
+  }
 
-  const maritalStatusText = {
-    married: language === "el" ? "Παντρεμένη" : "Married",
-    single_parent: language === "el" ? "Μονογονέας" : "Single Parent",
-    other: language === "el" ? "Άλλο" : "Other",
-  };
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
+        <Card className="p-8 rounded-[30px]">
+          <p>Profile not found</p>
+        </Card>
+      </div>
+    );
+  }
 
-  const maritalStatus = profile.marital_status
-    ? maritalStatusText[profile.marital_status as keyof typeof maritalStatusText]
-    : "";
+  const profilePhotos = profile.profile_photos_urls || [];
+  const primaryPhoto = profilePhotos[0] || profile.profile_photo_url;
 
   return (
-    <div className="min-h-screen relative" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
-      {/* Animated Mascot */}
-      <img 
-        src={mascot} 
-        alt="Momster Mascot" 
-        className="fixed top-24 right-4 w-24 h-24 opacity-40 object-contain pointer-events-none animate-bounce z-10 drop-shadow-lg"
-      />
-      
-      <div className="max-w-2xl mx-auto pt-20 pb-40 px-4 relative z-10">
+    <div className="min-h-screen pt-24 pb-32 px-4" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
+      <div className="max-w-3xl mx-auto space-y-6">
         {/* Welcome Header */}
-        {isOwnProfile && !viewAsPublic && (
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-foreground mb-1" style={{ fontFamily: "'Pacifico', cursive" }}>
-              Hi {profile?.username || profile?.full_name?.split(' ')[0]} 🌸
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {language === "el" ? "Το προφίλ σου" : "Your Profile"}
-            </p>
-          </div>
-        )}
-        
-        <div className="flex justify-between items-center mb-6">
-          {!isOwnProfile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          )}
-          {!isOwnProfile && (
-            <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
-              {profile?.full_name}
-            </h1>
-          )}
-          {isOwnProfile && (
-            <div className="flex gap-2">
-              {isAdmin && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate('/admin')}
-                  className="flex items-center gap-2"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="text-xs">Admin</span>
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setViewAsPublic(!viewAsPublic)}
-                className="flex items-center gap-2"
-              >
-                {viewAsPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                <span className="text-xs">
-                  {viewAsPublic 
-                    ? (language === "el" ? "Προσωπική Προβολή" : "Personal View")
-                    : (language === "el" ? "Δημόσια Προβολή" : "View as Public")
-                  }
-                </span>
-              </Button>
-            </div>
-          )}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Hi {profile.username || profile.full_name} 🌸
+          </h1>
+          <div className="mt-2 h-[1px] w-24 mx-auto bg-gradient-to-r from-transparent via-[#F3DCE5] to-transparent opacity-50" />
         </div>
 
-        {/* Profile Header Card */}
-        <Card className="p-6 mb-6">
-          {/* Photo Carousel with Floral Frame */}
-          <div className="flex flex-col items-center mb-6">
-            {profilePhotos.length > 1 ? (
-              <Carousel className="w-full max-w-md mb-6">
-                <CarouselContent>
-                  {profilePhotos.map((photo: string, index: number) => (
-                    <CarouselItem key={index}>
-                        <div className="flex justify-center">
-                          <div className="relative">
-                            {/* Enhanced Floral Background Glow */}
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-300/70 via-purple-300/70 to-pink-300/70 blur-3xl animate-pulse" style={{ width: '340px', height: '340px', margin: '-20px' }} />
-                            
-                            {/* Main Avatar with Enhanced Border */}
-                            <Avatar className="w-72 h-72 border-[12px] border-white shadow-2xl relative z-10" style={{
-                              boxShadow: '0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 8px rgba(236, 72, 153, 0.6), 0 0 0 14px rgba(219, 39, 119, 0.4), 0 0 60px rgba(219, 39, 119, 0.7)',
-                              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9))'
-                            }}>
-                              <AvatarImage src={photo} alt={`${profile.full_name} ${index + 1}`} className="object-cover" />
-                              <AvatarFallback className="text-6xl">{profile.full_name?.[0]}</AvatarFallback>
-                            </Avatar>
-                            
-                            {/* Enhanced Floral Frame - Always Visible */}
-                            <div className="absolute -top-8 -right-8 text-7xl animate-bounce drop-shadow-2xl z-20">🌸</div>
-                            <div className="absolute -bottom-8 -left-8 text-6xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.3s' }}>🌺</div>
-                            <div className="absolute top-4 -left-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.6s' }}>🌼</div>
-                            <div className="absolute -bottom-8 -right-8 text-5xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.9s' }}>🌷</div>
-                            <div className="absolute -top-8 left-12 text-4xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.2s' }}>🌹</div>
-                            <div className="absolute bottom-12 -right-8 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.5s' }}>🌻</div>
-                            <div className="absolute top-12 -right-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.7s' }}>💐</div>
-                            <div className="absolute -bottom-8 left-12 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '1s' }}>🏵️</div>
-                            
-                            {/* Optional Additional Frame Styles */}
-                            {frameStyle === 'hearts' && (
-                              <>
-                                <div className="absolute -top-6 right-4 text-6xl animate-bounce drop-shadow-lg z-20">💖</div>
-                                <div className="absolute bottom-4 -left-6 text-5xl animate-pulse drop-shadow-lg z-20">💕</div>
-                              </>
-                            )}
-                            {frameStyle === 'momster' && (
-                              <>
-                                <div className="absolute top-0 right-0 text-5xl animate-bounce drop-shadow-lg z-20">👶</div>
-                                <div className="absolute bottom-0 left-0 text-5xl animate-pulse drop-shadow-lg z-20">🤱</div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </Carousel>
-            ) : (
-              <div className="relative mb-6">
-                {/* Floral Background Glow */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-300/70 via-purple-300/70 to-pink-300/70 blur-3xl animate-pulse" style={{ width: '340px', height: '340px', margin: '-20px' }} />
-                
-                {/* Main Avatar with Enhanced Border */}
-                <Avatar className="w-72 h-72 border-[12px] border-white shadow-2xl relative z-10" style={{
-                  boxShadow: '0 0 0 4px rgba(255, 255, 255, 1), 0 0 0 8px rgba(236, 72, 153, 0.6), 0 0 0 14px rgba(219, 39, 119, 0.4), 0 0 60px rgba(219, 39, 119, 0.7)',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9))'
-                }}>
-                  <AvatarImage src={profilePhotos[0]} alt={profile.full_name} className="object-cover" />
-                  <AvatarFallback className="text-6xl">{profile.full_name?.[0]}</AvatarFallback>
-                </Avatar>
-                
-                {/* Enhanced Floral Frame - Always Visible */}
-                <div className="absolute -top-8 -right-8 text-7xl animate-bounce drop-shadow-2xl z-20">🌸</div>
-                <div className="absolute -bottom-8 -left-8 text-6xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.3s' }}>🌺</div>
-                <div className="absolute top-4 -left-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.6s' }}>🌼</div>
-                <div className="absolute -bottom-8 -right-8 text-5xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.9s' }}>🌷</div>
-                <div className="absolute -top-8 left-12 text-4xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.2s' }}>🌹</div>
-                <div className="absolute bottom-12 -right-8 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '0.5s' }}>🌻</div>
-                <div className="absolute top-12 -right-8 text-5xl animate-bounce drop-shadow-2xl z-20" style={{ animationDelay: '0.7s' }}>💐</div>
-                <div className="absolute -bottom-8 left-12 text-4xl animate-pulse drop-shadow-2xl z-20" style={{ animationDelay: '1s' }}>🏵️</div>
-                
-                {/* Optional Additional Frame Styles */}
-                {frameStyle === 'hearts' && (
-                  <>
-                    <div className="absolute -top-6 right-4 text-6xl animate-bounce drop-shadow-lg z-20">💖</div>
-                    <div className="absolute bottom-4 -left-6 text-5xl animate-pulse drop-shadow-lg z-20">💕</div>
-                  </>
-                )}
-                {frameStyle === 'momster' && (
-                  <>
-                    <div className="absolute top-0 right-0 text-5xl animate-bounce drop-shadow-lg z-20">👶</div>
-                    <div className="absolute bottom-0 left-0 text-5xl animate-pulse drop-shadow-lg z-20">🤱</div>
-                  </>
-                )}
-              </div>
-            )}
-
-            <h2 className="text-3xl font-bold text-foreground text-center mt-4 drop-shadow-sm" style={{ fontFamily: "'Pacifico', cursive" }}>
-              {profile.full_name}
-              {userAge && <span className="text-2xl text-foreground"> · {userAge} χρονών</span>}
-            </h2>
-            
-            {/* Location Pill */}
-            <div className="mt-3 flex justify-center">
-              <div className="bg-gradient-to-r from-pink-100 to-purple-100 border-2 border-primary rounded-full px-4 py-2 flex items-center gap-2 shadow-md">
-                <MapPin className="w-5 h-5 text-primary" />
-                <span className="text-base font-bold text-foreground">{profile.city}, {profile.area}</span>
-              </div>
-            </div>
-
-            {/* Bio Pill */}
-            {profile.bio && !viewAsPublic && (
-              <div className="mt-3 max-w-md mx-auto">
-                <div className="bg-gradient-to-r from-pink-50 to-purple-50 border-2 border-primary/30 rounded-2xl px-4 py-3 flex gap-2 shadow-md">
-                  <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <p className="text-base font-semibold text-foreground leading-relaxed">{profile.bio}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Kid Info Bubbles */}
-            {profile.children && Array.isArray(profile.children) && profile.children.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm text-primary text-center mb-2 font-bold">
-                  {language === "el" ? "🎈 Μαμά σε:" : "🎈 Mom to:"}
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {profile.children.map((child: any, idx: number) => {
-                    // Determine if age needs a unit suffix
-                    const ageStr = child.age?.toString() || '';
-                    const hasUnit = ageStr.includes('μηνών') || ageStr.includes('months') || ageStr.includes('χρονών') || ageStr.includes('years');
-                    const displayAge = hasUnit ? ageStr : (ageStr ? `${ageStr} χρονών` : '');
-                    
-                    return (
-                      <div 
-                        key={idx}
-                        className="bg-gradient-to-br from-pink-200 to-purple-200 border-2 border-pink-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-md transform hover:scale-105 transition-transform"
-                      >
-                        <span className="text-lg">{child.gender === 'girl' ? '👧' : child.gender === 'boy' ? '👦' : '👶'}</span>
-                        <span className="text-sm font-extrabold text-foreground">
-                          {child.gender === 'girl' ? (language === "el" ? 'Κορίτσι' : 'Girl') 
-                            : child.gender === 'boy' ? (language === "el" ? 'Αγόρι' : 'Boy')
-                            : (language === "el" ? 'Μωρό' : 'Baby')}
-                          {displayAge && ` — ${displayAge}`}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Photo/Avatar Management */}
-            {isOwnProfile && !viewAsPublic && (
-              <div className="mt-6">
-                <PhotoUploadWithDelete
-                  photos={profilePhotos}
-                  onPhotosUpdated={fetchProfile}
+        {/* Profile Photo Section - Cute & Elegant */}
+        <Card className="p-8 bg-gradient-to-br from-white/80 to-[#FDF7F9] border-2 border-[#F3DCE5] rounded-[35px] shadow-lg hover:shadow-xl transition-all">
+          <div className="flex flex-col items-center space-y-6">
+            {/* Large Profile Photo */}
+            <div className="relative">
+              <div className="w-48 h-48 rounded-full border-4 border-[#F3DCE5] p-2 bg-gradient-to-br from-white to-[#FDF7F9] shadow-[0_8px_16px_rgba(243,220,229,0.3)]">
+                <img
+                  src={primaryPhoto || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400"}
+                  alt={profile.full_name}
+                  className="w-full h-full object-cover rounded-full"
                 />
               </div>
-            )}
-
-            {isOwnProfile && !viewAsPublic && (
-              <div className="flex gap-2 mt-4 justify-center">
-                <Dialog open={avatarBuilderOpen} onOpenChange={setAvatarBuilderOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="rounded-[25px]">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Create Avatar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <AvatarBuilder 
-                      onSave={handleSaveAvatar}
-                      onCancel={() => setAvatarBuilderOpen(false)}
-                      initialConfig={profile.avatar_data as AvatarConfig}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
-
-            {/* Badges Section */}
-            <div className="mt-4 flex flex-wrap gap-2 justify-center">
-              <Badge variant="default" className="bg-gradient-to-r from-pink-500 to-purple-500 text-white border-0 shadow-md">
-                ✨ Newbie
-              </Badge>
             </div>
 
-            {isOwnProfile && !viewAsPublic && (
-              <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="mt-4" size="sm">
-                    <Edit className="w-4 h-4 mr-2" />
-                    {language === "el" ? "Επεξεργασία Προφίλ" : "Edit Profile"}
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{language === "el" ? "Επεξεργασία Προφίλ" : "Edit Profile"}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">{language === "el" ? "Όνομα" : "Name"}</Label>
-                    <Input
-                      id="full_name"
-                      value={editForm.full_name}
-                      onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">{language === "el" ? "Βιογραφικό" : "Bio"} ({language === "el" ? "μέχρι 120 χαρακτήρες" : "max 120 characters"})</Label>
-                    <Textarea
-                      id="bio"
-                      value={editForm.bio}
-                      onChange={(e) => setEditForm({ ...editForm, bio: e.target.value.slice(0, 120) })}
-                      maxLength={120}
-                      placeholder={language === "el" ? "Πες μας λίγα λόγια για εσένα..." : "Tell us a bit about yourself..."}
-                    />
-                    <p className="text-xs text-muted-foreground">{editForm.bio.length}/120</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="date_of_birth">{language === "el" ? "Ημερομηνία Γέννησης" : "Date of Birth"}</Label>
-                    <Input
-                      id="date_of_birth"
-                      type="text"
-                      placeholder={language === "el" ? "π.χ. 23/05/1987 ή 1987-05-23" : "e.g. 23/05/1987 or 1987-05-23"}
-                      value={editForm.date_of_birth}
-                      onChange={(e) => setEditForm({ ...editForm, date_of_birth: e.target.value })}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {language === "el" ? "Μπορείς να γράψεις την ημερομηνία ελεύθερα (DD/MM/YYYY)." : "You can type the date freely (DD/MM/YYYY)."}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="marital_status">{language === "el" ? "Οικογενειακή Κατάσταση" : "Marital Status"}</Label>
-                    <Select
-                      value={editForm.marital_status}
-                      onValueChange={(value) => setEditForm({ ...editForm, marital_status: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={language === "el" ? "Επιλέξτε..." : "Select..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="married">{language === "el" ? "Παντρεμένη" : "Married"}</SelectItem>
-                        <SelectItem value="single_parent">{language === "el" ? "Μονογονέας" : "Single Parent"}</SelectItem>
-                        <SelectItem value="other">{language === "el" ? "Άλλο" : "Other"}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="city">{language === "el" ? "Πόλη" : "City"}</Label>
-                    <Input
-                      id="city"
-                      value={editForm.city}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="area">{language === "el" ? "Περιοχή" : "Area"}</Label>
-                    <Input
-                      id="area"
-                      value={editForm.area}
-                      onChange={(e) => setEditForm({ ...editForm, area: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>{language === "el" ? "Πληροφορίες Παιδιών" : "Children Information"}</Label>
-                    {childrenArray.map((child: any, index: number) => (
-                      <div key={index} className="space-y-2 p-4 border border-border rounded-lg bg-secondary/10">
-                        <div className="space-y-2">
-                          <Label className="text-xs">{language === "el" ? "Ηλικία" : "Age"}</Label>
-                          <Input
-                            placeholder={language === "el" ? "π.χ. 3, 6 μηνών" : "e.g. 3, 6 months"}
-                            value={child.age || ""}
-                            onChange={(e) => {
-                              const newChildren = [...childrenArray];
-                              newChildren[index] = { ...newChildren[index], age: e.target.value };
-                              setChildrenInput(newChildren.map(c => c.age).join(", "));
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">{language === "el" ? "Φύλο" : "Gender"}</Label>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant={child.gender === 'boy' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => {
-                                const newChildren = [...childrenArray];
-                                newChildren[index] = { ...newChildren[index], gender: 'boy' };
-                                setChildrenArray(newChildren);
-                              }}
-                            >
-                              👦 {language === "el" ? "Αγόρι" : "Boy"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={child.gender === 'girl' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => {
-                                const newChildren = [...childrenArray];
-                                newChildren[index] = { ...newChildren[index], gender: 'girl' };
-                                setChildrenArray(newChildren);
-                              }}
-                            >
-                              👧 {language === "el" ? "Κορίτσι" : "Girl"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={child.gender === 'baby' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => {
-                                const newChildren = [...childrenArray];
-                                newChildren[index] = { ...newChildren[index], gender: 'baby' };
-                                setChildrenArray(newChildren);
-                              }}
-                            >
-                              👶 {language === "el" ? "Μωρό" : "Baby"}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>{language === "el" ? "Σχετικά με μένα / Ενδιαφέροντα" : "About Me / Interests"}</Label>
-                    <div className="grid grid-cols-1 gap-3">
-                      {INTERESTS.map((interest) => (
-                        <div key={interest.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={interest.id}
-                            checked={selectedInterests.includes(interest.id)}
-                            onCheckedChange={() => toggleInterest(interest.id)}
-                          />
-                          <Label htmlFor={interest.id} className="cursor-pointer">
-                            {interest.label[language as 'el' | 'en']}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button onClick={handleSaveProfile} className="w-full">
-                    {language === "el" ? "Αποθήκευση" : "Save"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {isOwnProfile && (
+              <PhotoUploadWithDelete 
+                photos={profilePhotos}
+                onPhotosUpdated={handlePhotoUpdate}
+              />
             )}
           </div>
-
         </Card>
 
-        {/* Interests Card */}
-        <Card className="p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">
-                {language === "el" ? "Σχετικά με μένα / Ενδιαφέροντα" : "About Me / Interests"}
-              </h3>
-            </div>
-            {isOwnProfile && !viewAsPublic && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {language === "el" ? "Επεξεργασία Ενδιαφερόντων" : "Edit Interests"}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {INTERESTS.map((interest) => (
-                      <div key={interest.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`interest-${interest.id}`}
-                          checked={selectedInterests.includes(interest.id)}
-                          onCheckedChange={() => toggleInterest(interest.id)}
-                        />
-                        <Label 
-                          htmlFor={`interest-${interest.id}`}
-                          className="text-sm cursor-pointer"
-                        >
-                          {interest.label[language as 'el' | 'en']}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    onClick={async () => {
-                      try {
-                        const { error } = await supabase
-                          .from("profiles")
-                          .update({ interests: selectedInterests })
-                          .eq("id", profile.id);
-                        if (error) throw error;
-                        toast.success(language === "el" ? "Τα ενδιαφέροντα ενημερώθηκαν" : "Interests updated");
-                        fetchProfile();
-                      } catch (error) {
-                        console.error("Error updating interests:", error);
-                        toast.error(language === "el" ? "Σφάλμα ενημέρωσης" : "Update error");
-                      }
-                    }}
-                    className="w-full mt-4"
-                  >
-                    {language === "el" ? "Αποθήκευση" : "Save"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            )}
-          </div>
-          {profile.interests && profile.interests.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.map((interestId: string) => {
-                const interest = INTERESTS.find(i => i.id === interestId);
-                return interest ? (
-                  <Badge key={interestId} variant="secondary">
-                    {interest.label[language as 'el' | 'en']}
-                  </Badge>
-                ) : null;
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {language === "el" ? "Δεν έχετε προσθέσει ενδιαφέροντα ακόμα" : "No interests added yet"}
-            </p>
-          )}
-        </Card>
-
-        {/* Settings Card */}
-        {isOwnProfile && !viewAsPublic && (
-          <Card className="p-6 mb-6">
-            <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start" size="lg">
-                  <Settings className="w-5 h-5 mr-3" />
-                  {language === "el" ? "Ρυθμίσεις" : "Settings"}
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{language === "el" ? "Ρυθμίσεις" : "Settings"}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-6 py-4">
-                {/* Notifications */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm">
-                    {language === "el" ? "Ειδοποιήσεις" : "Notifications"}
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-email" className="text-sm">
-                        {language === "el" ? "Email" : "Email"}
-                      </Label>
-                      <Switch
-                        id="notif-email"
-                        checked={notificationSettings.email}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, email: checked })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-push" className="text-sm">
-                        {language === "el" ? "Push Notifications" : "Push Notifications"}
-                      </Label>
-                      <Switch
-                        id="notif-push"
-                        checked={notificationSettings.push}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, push: checked })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-matches" className="text-sm">
-                        {language === "el" ? "Νέα Matches" : "New Matches"}
-                      </Label>
-                      <Switch
-                        id="notif-matches"
-                        checked={notificationSettings.matches}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, matches: checked })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-messages" className="text-sm">
-                        {language === "el" ? "Μηνύματα" : "Messages"}
-                      </Label>
-                      <Switch
-                        id="notif-messages"
-                        checked={notificationSettings.messages}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({ ...notificationSettings, messages: checked })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Privacy */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-sm">
-                    {language === "el" ? "Απόρρητο" : "Privacy"}
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="privacy-discovery" className="text-sm">
-                        {language === "el" ? "Ορατότητα στο Discovery" : "Visible in Discovery"}
-                      </Label>
-                      <Switch
-                        id="privacy-discovery"
-                        checked={privacySettings.discovery_visible}
-                        onCheckedChange={(checked) =>
-                          setPrivacySettings({ ...privacySettings, discovery_visible: checked })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="privacy-active" className="text-sm">
-                        {language === "el" ? "Εμφάνιση Τελευταίας Δραστηριότητας" : "Show Last Active"}
-                      </Label>
-                      <Switch
-                        id="privacy-active"
-                        checked={privacySettings.show_last_active}
-                        onCheckedChange={(checked) =>
-                          setPrivacySettings({ ...privacySettings, show_last_active: checked })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveSettings} className="w-full">
-                  {language === "el" ? "Αποθήκευση Ρυθμίσεων" : "Save Settings"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </Card>
-        )}
-
-        {/* Boost My Profile Button - Premium Feature */}
-        {isOwnProfile && !viewAsPublic && (
-          <Card className="p-6 mb-6 bg-gradient-to-br from-[#F8E9EE] to-[#F5E8F0] border-[#F3DCE5]">
-            <div className="flex items-center justify-between">
+        {/* Basic Info Card - Powder Pink */}
+        <Card className="p-8 bg-gradient-to-br from-white/90 to-[#FDF7F9] border-2 border-[#F3DCE5] rounded-[32px] shadow-md">
+          <div className="space-y-5">
+            {/* Name & Age */}
+            <div className="flex items-center gap-3 pb-4 border-b border-[#F3DCE5]/40">
+              <span className="text-xl">💗</span>
               <div>
-                <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Boost My Profile*
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {language === "el" ? "Εμφάνισε το προφίλ σου σε περισσότερες μαμάδες" : "Show your profile to more moms"}
-                </p>
+                <h2 className="text-2xl font-bold text-foreground">{profile.full_name}</h2>
+                {getAge() && (
+                  <p className="text-sm text-muted-foreground">{getAge()} χρονών</p>
+                )}
               </div>
-              <Button
-                disabled
-                size="lg"
-                className="rounded-[30px] bg-gradient-to-br from-[#C8788D] to-[#B86B80] opacity-50"
-              >
-                Boost
-              </Button>
+            </div>
+
+            {/* Location */}
+            <div className="flex items-start gap-3 pb-4 border-b border-[#F3DCE5]/40">
+              <span className="text-lg">📍</span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{profile.area}</p>
+                <p className="text-sm text-muted-foreground">{profile.city}</p>
+              </div>
+            </div>
+
+            {/* Kids */}
+            {profile.children && Array.isArray(profile.children) && profile.children.length > 0 && (
+              <div className="flex items-start gap-3 pb-4 border-b border-[#F3DCE5]/40">
+                <span className="text-lg">🍼</span>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Παιδιά:</p>
+                  {getChildrenText()}
+                </div>
+              </div>
+            )}
+
+            {/* Bio */}
+            {profile.bio && (
+              <div className="flex items-start gap-3">
+                <span className="text-lg">✨</span>
+                <p className="text-sm text-foreground/90 leading-relaxed">{profile.bio}</p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Interests & Tags - Soft Bubbles */}
+        {profile.interests && profile.interests.length > 0 && (
+          <Card className="p-6 bg-gradient-to-br from-white/90 to-[#FDF7F9] border-2 border-[#F3DCE5] rounded-[28px] shadow-md">
+            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <span>💬</span> Interests
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {profile.interests.map((interest: string) => (
+                <Badge
+                  key={interest}
+                  className="px-4 py-2 rounded-full bg-gradient-to-br from-[#FDF7F9] to-[#F5E8F0] border-2 border-[#F3DCE5] text-foreground font-medium shadow-sm hover:shadow-md transition-all"
+                >
+                  {interest}
+                </Badge>
+              ))}
             </div>
           </Card>
         )}
-        
-        {/* Logout */}
-        {isOwnProfile && !viewAsPublic && (
-          <Button variant="destructive" className="w-full mb-6 rounded-[30px]" size="lg" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5 mr-3" />
-            {language === "el" ? "Αποσύνδεση" : "Sign Out"}
-          </Button>
+
+        {/* Premium Perk Section - Elegant & Subtle */}
+        {isOwnProfile && (
+          <Card className="p-6 bg-gradient-to-br from-white/90 to-[#FCF0F5] border-2 border-[#F3DCE5] rounded-[28px] shadow-md relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#F3DCE5]/20 rounded-full blur-3xl" />
+            <div className="relative flex flex-col items-center text-center space-y-3">
+              <Button
+                disabled
+                className="rounded-[30px] bg-gradient-to-r from-[#F3DCE5] to-[#F5E8F0] text-foreground border-2 border-[#F3DCE5] hover:shadow-lg transition-all opacity-60 cursor-not-allowed"
+                size="lg"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Boost My Profile*
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                *Momster Perks — free for now, Premium later.
+              </p>
+            </div>
+          </Card>
+        )}
+
+        {/* Settings / Edit Buttons - Capsule Style */}
+        {isOwnProfile && (
+          <div className="flex gap-4">
+            <Button
+              onClick={() => navigate("/profile-setup")}
+              className="flex-1 rounded-[30px] bg-gradient-to-r from-[#C8788D] to-[#B86B80] hover:from-[#B86B80] hover:to-[#C8788D] text-white shadow-md hover:shadow-lg transition-all"
+              size="lg"
+            >
+              Edit Profile
+            </Button>
+            <Button
+              variant="outline"
+              className="rounded-[30px] border-2 border-[#F3DCE5] hover:bg-[#FDF7F9] shadow-sm hover:shadow-md transition-all"
+              size="lg"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Footer with Premium Message */}
-      <footer className="fixed bottom-20 left-0 right-0 py-4 px-4 bg-[#F8E9EE]/95 backdrop-blur-md border-t border-[#F3DCE5]">
-        <div className="max-w-2xl mx-auto text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <img src={mascot} alt="Momster Mascot" className="w-8 h-8 object-contain" />
-            <span className="text-sm font-medium text-foreground">
-              {language === "el" ? "Μαζί, οι μαμάδες ανθίζουν!" : "Together, moms thrive!"}
-            </span>
+      {/* Footer - Minimal & Elegant */}
+      <footer className="fixed bottom-0 left-0 right-0 py-6 px-4 bg-[#F8E9EE]/95 backdrop-blur-md border-t border-[#F3DCE5]">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex flex-col items-center gap-3 text-center">
+            {/* Logo in soft frame */}
+            <div className="relative inline-block p-3 rounded-full bg-[#F8E9EE]/30">
+              <img src={logo} alt="Momster Logo" className="w-24 h-auto object-contain opacity-90" />
+            </div>
+            
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <a href="/privacy-terms" className="hover:text-primary transition-colors">Terms of Use</a>
+                <span>•</span>
+                <a href="/privacy-terms" className="hover:text-primary transition-colors">Privacy</a>
+              </div>
+              <p className="text-xs text-muted-foreground italic">
+                Momster — made with love for moms
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            *Momster Perks — free for now, Premium later.
-          </p>
         </div>
       </footer>
-
-      {mascotConfig && (
-        <MomsterMascot
-          state={mascotConfig.state}
-          message={mascotConfig.message}
-          visible={visible}
-          showButton={mascotConfig.showButton}
-          buttonText={mascotConfig.buttonText}
-          onButtonClick={mascotConfig.onButtonClick}
-          duration={mascotConfig.duration}
-          onHide={hideMascot}
-        />
-      )}
     </div>
   );
 }

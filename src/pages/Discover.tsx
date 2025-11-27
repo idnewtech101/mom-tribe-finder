@@ -385,14 +385,18 @@ export default function Discover() {
           </Button>
         </div>
 
-        {/* Daily Swipes Slider */}
-        <div className="mt-4 bg-gradient-to-br from-[#F8E9EE] to-[#F5E8F0] p-4 rounded-[20px] border border-[#F3DCE5]">
+        {/* Daily Swipes Slider with Mascot */}
+        <div className="mt-4 bg-gradient-to-br from-[#F8E9EE] to-[#F5E8F0] p-4 rounded-[20px] border border-[#F3DCE5] relative overflow-visible">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-bold text-foreground">Daily Swipes:</span>
             <span className="text-sm font-bold text-primary">∞/15</span>
           </div>
-          <div className="w-full bg-white rounded-full h-2">
-            <div className="bg-gradient-to-r from-[#C8788D] to-[#B86B80] h-2 rounded-full w-full"></div>
+          <div className="w-full bg-white rounded-full h-3 relative">
+            <div className="bg-gradient-to-r from-[#C8788D] to-[#B86B80] h-3 rounded-full w-full"></div>
+            {/* Mascot pushing the slider */}
+            <div className="absolute -right-2 top-1/2 -translate-y-1/2 animate-bounce">
+              <img src={mascot} alt="Mascot" className="w-8 h-8 object-contain" />
+            </div>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">Unlimited για αρχή!</p>
         </div>

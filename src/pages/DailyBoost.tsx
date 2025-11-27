@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import mascot from "@/assets/mascot.jpg";
 import ThisOrThat from "@/components/ThisOrThat";
 import MagicMatching from "@/components/MagicMatching";
+import { supabase } from "@/integrations/supabase/client";
 
 const MOODS = [
   { emoji: "😊", value: "positive", label: "Happy" },
@@ -162,8 +163,10 @@ export default function DailyBoost() {
   const [currentMoodQuoteIndex, setCurrentMoodQuoteIndex] = useState(0);
   const { mascotConfig, visible, showMascot, hideMascot } = useMascot();
   const [showHearts, setShowHearts] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
+    fetchProfile();
     // Check if welcome popup has been shown before
     const hasSeenWelcome = localStorage.getItem('momster_home_welcome_shown');
     
@@ -180,6 +183,23 @@ export default function DailyBoost() {
       localStorage.setItem('momster_home_welcome_shown', 'true');
     }
   }, [language, showMascot]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, full_name")
+        .eq("id", user.id)
+        .single();
+
+      if (data) setProfile(data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const dailyQuote = DAILY_QUOTES[language][Math.floor(Math.random() * DAILY_QUOTES[language].length)];
   const selfCareTip = SELF_CARE_TIPS[language][Math.floor(Math.random() * SELF_CARE_TIPS[language].length)];
@@ -269,208 +289,82 @@ export default function DailyBoost() {
         {/* Welcome Header */}
         <div className="text-center space-y-2 mb-8">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2" style={{ fontFamily: "'Pacifico', cursive" }}>
-            Hi Username 🌸
+            Hi {profile?.username || profile?.full_name || 'Username'} 🌸
           </h1>
           <p className="text-sm text-muted-foreground">
             {language === 'el' ? 'Η καθημερινή σου δόση ενέργειας' : 'Your daily dose of energy'}
           </p>
         </div>
 
-        {/* 2 Column Grid with Better Spacing */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content (2/3) */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Events Banner */}
-            <Card className="p-8 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300 overflow-hidden relative hover:shadow-xl transition-all rounded-[25px]">
-              <div className="absolute top-2 right-2 bg-rose-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md">
-                Coming Soon*
-              </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-pink-300/20 rounded-full blur-3xl" />
-              <div className="relative flex items-center justify-between">
-                <div className="space-y-2">
-                  <h2 className="text-xl font-bold text-rose-700 flex items-center gap-2">
-                    <Calendar className="w-6 h-6" />
-                    {language === 'el' ? 'Εκδηλώσεις' : 'Events'}
-                  </h2>
-                  <p className="text-sm text-rose-600">
-                    {language === 'el' 
-                      ? 'Βρες τα καλύτερα events για μαμάδες' 
-                      : 'Find the best events for moms'}
-                  </p>
-                </div>
-                <div className="text-4xl">🎉</div>
-              </div>
-            </Card>
+        {/* 2x2 Grid Layout with generous spacing */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* Magic Matching - FIRST */}
+          <MagicMatching />
 
-            {/* Mompreneur Section - Home Tab */}
-            <Card className="p-8 bg-gradient-to-br from-purple-100 via-pink-100 to-purple-200 border-purple-300 overflow-hidden relative hover:shadow-xl transition-all rounded-[25px]">
-              <div className="absolute top-2 right-2 bg-purple-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md">
-                Mompreneur*
-              </div>
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-purple-300/30 rounded-full blur-3xl" />
-              <div className="absolute -bottom-8 left-4 opacity-20">
-                <img src={mascot} alt="Mompreneur Mascot" className="w-24 h-24 object-contain" />
-              </div>
-              <div className="relative space-y-3">
-                <h2 className="text-xl font-bold text-purple-900 flex items-center gap-2">
-                  💼 Mompreneur
+          {/* Events Banner */}
+          <Card className="p-6 bg-gradient-to-br from-pink-100 to-rose-100 border-[#F3DCE5] overflow-hidden relative hover:shadow-xl transition-all rounded-[30px]">
+            <div className="absolute top-3 right-3 bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+              *
+            </div>
+            <div className="relative space-y-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-6 h-6 text-rose-700" />
+                <h2 className="text-xl font-bold text-rose-700">
+                  {language === 'el' ? 'Events' : 'Events'}
                 </h2>
-                <p className="text-sm text-purple-800 font-medium">
-                  {language === 'el'
-                    ? 'Χτίζουμε έναν χώρο ειδικά για μαμάδες που ξεκινούν ή τρέχουν τη δική τους επιχείρηση – με networking, συνεργασίες και πρακτικά tips.'
-                    : 'We are building a space just for moms who are starting or running their own business – with networking, collaborations and practical tips.'}
-                </p>
-                <p className="text-xs text-purple-900/80 font-semibold uppercase tracking-wide">
-                  Coming Soon ✨
-                </p>
               </div>
-            </Card>
-
-            {/* Magic Matching */}
-            <MagicMatching />
-
-            {/* This or That */}
-            <ThisOrThat />
-
-            {/* Momster Ταπεράκι */}
-            <Link to="/recipes">
-              <Card className="p-8 bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200 hover:shadow-xl transition-all cursor-pointer group rounded-[25px]">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-bold text-rose-700 flex items-center gap-2">
-                      🧀 Momster Ταπεράκι
-                    </h2>
-                    <p className="text-sm text-rose-600">
-                      {language === 'el' 
-                        ? 'Υγιεινές συνταγές για μικρά χεράκια' 
-                        : 'Healthy recipes for little hands'}
-                    </p>
-                  </div>
-                  <ChefHat className="w-12 h-12 text-rose-400 group-hover:scale-110 transition-transform" />
-                </div>
-              </Card>
-            </Link>
-
-            {/* Mood Check */}
-            <Card className="p-8 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300 rounded-[25px]">
-              <div className="space-y-5">
-                <h2 className="text-lg font-bold text-foreground text-center">
-                  💭 {language === 'el' ? 'Πώς νιώθεις σήμερα;' : 'How are you feeling today?'}
-                </h2>
-                
-                <div className="flex justify-center items-center gap-3 overflow-x-auto pb-2">
-                  {MOODS.map((mood) => (
-                    <button
-                      key={mood.emoji}
-                      onClick={() => handleMoodSelect(mood.value)}
-                      className={`
-                        flex-shrink-0 w-[60px] h-[60px] rounded-full text-3xl
-                        bg-gradient-to-br from-pink-50 to-rose-50
-                        border-2 transition-all duration-200
-                        hover:scale-110 hover:shadow-lg active:scale-95
-                        ${selectedMood === mood.value 
-                          ? 'border-rose-500 shadow-lg scale-105 animate-bounce' 
-                          : 'border-pink-300 hover:border-rose-400'
-                        }
-                      `}
-                      aria-label={mood.label}
-                    >
-                      {mood.emoji}
-                    </button>
-                  ))}
-                </div>
-
-                {moodQuote && (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <Card className="p-5 bg-white/90 border-pink-200 shadow-md">
-                      <p className="text-base text-foreground italic leading-relaxed text-center">
-                        "{moodQuote}"
-                      </p>
-                    </Card>
-                    
-                    <div className="flex justify-center gap-3">
-                      <Button
-                        onClick={handleNextQuote}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 hover:scale-105 transition-transform border-pink-300 hover:bg-pink-50"
-                      >
-                        🔄 {language === 'el' ? 'Επόμενο' : 'Next'}
-                      </Button>
-                      <Button
-                        onClick={handleShareQuote}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 hover:scale-105 transition-transform border-pink-300 hover:bg-pink-50"
-                      >
-                        📤 {language === 'el' ? 'Μοιράσου' : 'Share'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {!moodQuote && (
-                  <p className="text-sm text-muted-foreground text-center italic">
-                    {language === 'el' 
-                      ? 'Επίλεξε ένα emoji για να δεις ένα quote' 
-                      : 'Select an emoji to see a quote'}
-                  </p>
-                )}
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Sidebar - Mini Sections (1/3) */}
-          <div className="space-y-4">
-            {/* Quote of the Day */}
-            <Card className="p-4 bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200 hover:shadow-lg transition-all">
-              <div className="space-y-2">
-                <h2 className="text-sm font-bold text-rose-700 flex items-center gap-2">
-                  💫 {language === 'el' ? 'Quote της ημέρας' : 'Quote of the Day'}
-                </h2>
-                <p className="text-sm text-foreground italic leading-relaxed">
-                  "{dailyQuote}"
-                </p>
-              </div>
-            </Card>
-
-            {/* Self-Care Tip */}
-            <Card className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 border-pink-200 hover:shadow-lg transition-all">
-              <div className="space-y-2">
-                <h2 className="text-sm font-bold text-rose-700 flex items-center gap-2">
-                  🌿 {language === 'el' ? 'Mini Self-Care' : 'Mini Self-Care'}
-                </h2>
-                <p className="text-sm text-foreground font-medium">
-                  {selfCareTip}
-                </p>
-                <p className="text-xs text-muted-foreground italic">
-                  {language === 'el' ? '(10-30 δευτερόλεπτα)' : '(10-30 seconds)'}
-                </p>
-              </div>
-            </Card>
-
-            {/* Did You Know? */}
-            <Card className="p-4 bg-gradient-to-br from-pink-100 to-rose-100 border-pink-300 hover:shadow-lg transition-all">
-              <div className="space-y-2">
-                <h2 className="text-sm font-bold text-rose-700 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-rose-500" />
-                  {language === 'el' ? 'Το ήξερες;' : 'Did you know?'}
-                </h2>
-                <p className="text-xs text-foreground/90 leading-relaxed">
-                  {didYouKnowFact}
-                </p>
-              </div>
-            </Card>
-
-            {/* Bottom Message */}
-            <Card className="p-4 bg-gradient-to-br from-rose-100 to-pink-100 border-pink-300 hover:shadow-lg transition-all">
-              <p className="text-xs text-center text-foreground/90 leading-relaxed">
+              <p className="text-sm text-rose-600">
                 {language === 'el' 
-                  ? '💕 Θυμήσου: Κάθε μέρα είναι μια νέα ευκαιρία. Είσαι δυνατή, αξιαγάπητη και τα καταφέρνεις υπέροχα.' 
-                  : '💕 Remember: Every day is a new opportunity. You are strong, loved, and doing amazing.'}
+                  ? 'Βρες τα καλύτερα events για μαμάδες' 
+                  : 'Find the best events for moms'}
               </p>
+              <div className="text-3xl text-center py-2">🎉</div>
+            </div>
+          </Card>
+
+          {/* Mompreneur Section */}
+          <Card className="p-6 bg-gradient-to-br from-purple-100 via-pink-100 to-purple-200 border-[#F3DCE5] overflow-hidden relative hover:shadow-xl transition-all rounded-[30px]">
+            <div className="absolute top-3 right-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+              *
+            </div>
+            <div className="relative space-y-3">
+              <h2 className="text-xl font-bold text-purple-900 flex items-center gap-2">
+                💼 Mompreneur
+              </h2>
+              <p className="text-sm text-purple-800 font-medium">
+                {language === 'el'
+                  ? 'Χώρος για μαμάδες επιχειρηματίες – networking, συνεργασίες & tips.'
+                  : 'Space for entrepreneur moms – networking, collaborations & tips.'}
+              </p>
+              <p className="text-xs text-purple-900/80 font-semibold uppercase tracking-wide text-center">
+                Coming Soon ✨
+              </p>
+            </div>
+          </Card>
+
+          {/* Momster Ταπεράκι */}
+          <Link to="/recipes">
+            <Card className="p-6 bg-gradient-to-br from-pink-50 to-rose-50 border-[#F3DCE5] hover:shadow-xl transition-all cursor-pointer group rounded-[30px] h-full">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <ChefHat className="w-6 h-6 text-rose-700 group-hover:scale-110 transition-transform" />
+                  <h2 className="text-xl font-bold text-rose-700">
+                    🧀 Momster Ταπεράκι
+                  </h2>
+                </div>
+                <p className="text-sm text-rose-600">
+                  {language === 'el' 
+                    ? 'Υγιεινές συνταγές για μικρά χεράκια' 
+                    : 'Healthy recipes for little hands'}
+                </p>
+              </div>
             </Card>
-          </div>
+          </Link>
+        </div>
+
+        {/* This or That - Full width below grid */}
+        <div className="max-w-5xl mx-auto mt-8">
+          <ThisOrThat />
         </div>
       </div>
 
