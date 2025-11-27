@@ -4,18 +4,75 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Heart, ShoppingBag, Sparkles } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Marketplace() {
   const [showRules, setShowRules] = useState(false);
   const [notified, setNotified] = useState(false);
   const { toast } = useToast();
 
-  const handleNotifyMe = () => {
-    setNotified(true);
-    toast({
-      title: "🌷 Τέλεια!",
-      description: "Θα σε ενημερώσουμε μόλις ανοίξει το Marketplace!",
-    });
+  const handleNotifyMe = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "🔒 Σύνδεση απαραίτητη",
+          description: "Παρακαλώ συνδέσου για να λαμβάνεις ειδοποιήσεις!",
+        });
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.email) {
+        toast({
+          title: "❌ Σφάλμα",
+          description: "Δεν βρέθηκε email",
+        });
+        return;
+      }
+
+      // Check if already subscribed
+      const { data: existing } = await supabase
+        .from('marketplace_notifications')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existing) {
+        toast({
+          title: "✅ Ήδη εγγεγραμμένη!",
+          description: "Είσαι ήδη στη λίστα αναμονής!",
+        });
+        setNotified(true);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('marketplace_notifications')
+        .insert([{
+          email: profile.email,
+          user_id: user.id
+        }]);
+
+      if (error) throw error;
+
+      setNotified(true);
+      toast({
+        title: "🌷 Τέλεια!",
+        description: "Θα σε ενημερώσουμε μόλις ανοίξει το Marketplace!",
+      });
+    } catch (error) {
+      console.error('Error subscribing:', error);
+      toast({
+        title: "❌ Σφάλμα",
+        description: "Κάτι πήγε στραβά, δοκίμασε ξανά!",
+      });
+    }
   };
 
   return (
