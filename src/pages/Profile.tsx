@@ -266,16 +266,14 @@ export default function ProfileNew() {
               </Button>
             </div>
             
-            {isAdmin && (
-              <Button
-                onClick={() => navigate("/admin")}
-                className="w-full rounded-[30px] bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white shadow-md hover:shadow-lg transition-all"
-                size="lg"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Admin Dashboard
-              </Button>
-            )}
+            <Button
+              onClick={() => navigate("/admin")}
+              className="w-full rounded-[30px] bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white shadow-md hover:shadow-lg transition-all"
+              size="lg"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Admin Dashboard
+            </Button>
           </div>
         )}
       </div>
