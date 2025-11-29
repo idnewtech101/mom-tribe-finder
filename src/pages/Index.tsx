@@ -68,23 +68,25 @@ const Index = () => {
       <section className="pt-32 pb-16 px-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
         {/* Large animated mascot with waving animation */}
         <div className="absolute top-10 right-10 hidden lg:block animate-float opacity-90">
-          <div className="w-56 h-56 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
-            <img 
-              src={logo} 
-              alt="Momster Logo" 
-              className="w-48 h-48 object-contain drop-shadow-2xl" 
-            />
-          </div>
+        <div className="w-56 h-56 rounded-full flex items-center justify-center bg-[#F8E9EE]/25">
+          <img 
+            src={logo} 
+            alt="Momster Logo" 
+            className="w-48 h-48 object-cover rounded-full drop-shadow-2xl" 
+            style={{ opacity: 0.95 }}
+          />
+        </div>
         </div>
         <div className="container mx-auto text-center max-w-5xl">
           <div className="mb-6 flex flex-col items-center justify-center gap-4">
-            <div className="relative inline-block p-8 rounded-full" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
-              <img 
-                src={logo} 
-                alt="Momster Logo" 
-                className="relative w-full max-w-2xl h-auto object-contain animate-scale-in drop-shadow-2xl" 
-              />
-            </div>
+            <div className="relative inline-block p-4 rounded-full bg-[#F8E9EE]/25">
+               <img 
+                 src={logo} 
+                 alt="Momster Logo" 
+                 className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 object-cover rounded-full animate-scale-in drop-shadow-2xl" 
+                 style={{ opacity: 0.95 }}
+               />
+             </div>
           </div>
           
           <p className="text-xl text-foreground mb-6 font-medium">
@@ -332,9 +334,9 @@ const Index = () => {
             {/* Brand Section */}
             <div className="text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
-                <div className="inline-block p-2 rounded-full" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
-                  <img src={logo} alt="Momster Logo" className="w-32 h-auto object-contain" />
-                </div>
+                  <div className="relative inline-block p-3 rounded-full bg-[#F8E9EE]/25 backdrop-blur-sm">
+                    <img src={logo} alt="Momster Logo" className="w-16 h-16 object-cover rounded-full" style={{ opacity: 0.95 }} />
+                  </div>
               </div>
             </div>
 
