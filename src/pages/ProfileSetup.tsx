@@ -92,11 +92,6 @@ export default function ProfileSetup() {
         .eq('id', session.user.id)
         .single();
 
-      if (profile?.profile_completed) {
-        navigate("/discover");
-        return;
-      }
-
       if (profile) {
         setUsername(profile.username || "");
         setCity(profile.city || "");
