@@ -278,24 +278,24 @@ export default function ProfileNew() {
         {/* Settings / Edit Buttons - Capsule Style */}
         {isOwnProfile && (
           <div className="space-y-3">
-            <div className="flex gap-3">
-              <Button
-                onClick={() => navigate("/profile-setup")}
-                className="flex-1 rounded-[30px] bg-gradient-to-r from-[#C8788D] to-[#B86B80] hover:from-[#B86B80] hover:to-[#C8788D] text-white shadow-md hover:shadow-lg transition-all"
-                size="lg"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-[30px] border-2 border-[#F3DCE5] hover:bg-[#FDF7F9] shadow-sm hover:shadow-md transition-all"
-                size="lg"
-                onClick={handleSignOut}
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button
+              onClick={() => navigate("/profile-setup")}
+              className="w-full rounded-[30px] bg-gradient-to-r from-[#C8788D] to-[#B86B80] hover:from-[#B86B80] hover:to-[#C8788D] text-white shadow-md hover:shadow-lg transition-all"
+              size="lg"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Επεξεργασία Προφίλ
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full rounded-[30px] border-2 border-[#F3DCE5] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 shadow-sm hover:shadow-md transition-all"
+              size="lg"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Αποσύνδεση
+            </Button>
           </div>
         )}
       </div>
