@@ -53,6 +53,15 @@ export default function Events() {
           <Button>Νέα Εκδήλωση</Button>
         </div>
 
+        <Card className="mb-6 p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-purple-600 mb-2">Coming Soon – Premium ✨</h3>
+            <p className="text-sm text-muted-foreground">
+              Ξεκλείδωσε αποκλειστικές εκδηλώσεις και workshops!
+            </p>
+          </div>
+        </Card>
+
         <div className="space-y-4">
           {events.map((event) => (
             <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">

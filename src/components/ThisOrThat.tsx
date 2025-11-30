@@ -1,172 +1,135 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface Poll {
-  id: string;
-  question_a: string;
-  question_b: string;
-  emoji_a: string;
-  emoji_b: string;
-  category: string;
+interface Dilemma {
+  optionA: string;
+  optionB: string;
 }
 
-interface PollVote {
-  poll_id: string;
-  choice: 'a' | 'b';
-}
+const dilemmas: Dilemma[] = [
+  {"optionA": "Βρεφικό άρωμα", "optionB": "Χωρίς άρωμα"},
+  {"optionA": "Babywearing", "optionB": "Καρότσι"},
+  {"optionA": "Πρωινό μπανάκι", "optionB": "Βραδινό μπανάκι"},
+  {"optionA": "Μπιμπερό", "optionB": "Ποτηράκι"},
+  {"optionA": "Μαγειρεμένα φρούτα", "optionB": "Ωμά φρούτα"},
+  {"optionA": "Παιχνίδια Montessori", "optionB": "Αισθητηριακά παιχνίδια"},
+  {"optionA": "Ύπνος μόνο του", "optionB": "Συγκοίμηση"},
+  {"optionA": "Μωρουδιακό κουβερτάκι", "optionB": "Sleeping bag"},
+  {"optionA": "Κούνια", "optionB": "Παρκοκρέβατο"},
+  {"optionA": "Βόλτα στο πάρκο", "optionB": "Βόλτα στη θάλασσα"},
+  {"optionA": "Pancakes", "optionB": "Βάφλες"},
+  {"optionA": "Smoothie bowl", "optionB": "Τοστ"},
+  {"optionA": "Χειροποίητο φαγητό", "optionB": "Delivery"},
+  {"optionA": "Ζεστός καφές", "optionB": "Iced coffee"},
+  {"optionA": "Meal prep", "optionB": "Στο λεπτό"},
+  {"optionA": "Λίστα με μολύβι", "optionB": "Εφαρμογή"},
+  {"optionA": "Πρωινό με ησυχία", "optionB": "Πρωινό με φασαρία"},
+  {"optionA": "Μεσημεριανός ύπνος", "optionB": "Βραδινή χαλάρωση"},
+  {"optionA": "Ζάχαρη", "optionB": "Μέλι"},
+  {"optionA": "Ομελέτα", "optionB": "Κουάκερ"},
+  {"optionA": "Αρωματικό χώρου", "optionB": "Κεράκι"},
+  {"optionA": "Ροζ παστέλ", "optionB": "Nude beige"},
+  {"optionA": "Cozy κουβέρτα", "optionB": "Fluffy ρόμπα"},
+  {"optionA": "Netflix", "optionB": "YouTube"},
+  {"optionA": "Τακτοποίηση πρωί", "optionB": "Τακτοποίηση βράδυ"},
+  {"optionA": "Planner χαρτί", "optionB": "Ψηφιακό ημερολόγιο"},
+  {"optionA": "Μίνιμαλ", "optionB": "Πολύχρωμο"},
+  {"optionA": "Ανοιχτά φώτα", "optionB": "Χαμηλό φωτισμό"},
+  {"optionA": "Πλυντήριο πρωί", "optionB": "Πλυντήριο βράδυ"},
+  {"optionA": "Παιδικό δωμάτιο μίνιμαλ", "optionB": "Πολύχρωμο"},
+  {"optionA": "Bubble bath", "optionB": "Γρήγορο ντουζ"},
+  {"optionA": "Scrunchie", "optionB": "Κλάμερ"},
+  {"optionA": "Gloss", "optionB": "Balm"},
+  {"optionA": "Yoga", "optionB": "Περπάτημα"},
+  {"optionA": "Journal", "optionB": "Affirmations"},
+  {"optionA": "Σπιτική μάσκα", "optionB": "Sheet mask"},
+  {"optionA": "Fleecy pyjamas", "optionB": "Cotton set"},
+  {"optionA": "Ρόφημα βοτάνων", "optionB": "Καφές"},
+  {"optionA": "Weekend ξεκούρασης", "optionB": "Έξοδος"},
+  {"optionA": "Podcast", "optionB": "Μουσική"},
+  {"optionA": "Μαμάδες του πάρκου", "optionB": "Μαμάδες της παιδικής χαράς"},
+  {"optionA": "Playdate στο σπίτι", "optionB": "Playdate στο πάρκο"},
+  {"optionA": "Ομαδικό chat", "optionB": "1:1 μήνυμα"},
+  {"optionA": "Κουβέντα με καφέ", "optionB": "Βόλτα με καρότσι"},
+  {"optionA": "Κλήση", "optionB": "Γραπτό μήνυμα"},
+  {"optionA": "Girls night in", "optionB": "Girls night out"},
+  {"optionA": "Χειροποίητο δώρο", "optionB": "Αγοραστό"},
+  {"optionA": "Μικρή παρέα", "optionB": "Μεγάλη παρέα"},
+  {"optionA": "Μοιρασμός εμπειριών", "optionB": "Χιούμορ"},
+  {"optionA": "Διακοπές με φίλους", "optionB": "Οικογενειακές διακοπές"},
+  {"optionA": "Πρωινή μαμά", "optionB": "Βραδινή μαμά"},
+  {"optionA": "Minimal phone use", "optionB": "Doomscrolling"},
+  {"optionA": "Advent calendar", "optionB": "Surprise box"},
+  {"optionA": "Ρομαντική ταινία", "optionB": "Κωμωδία"},
+  {"optionA": "Αλμυρό σνακ", "optionB": "Γλυκό"},
+  {"optionA": "Shopping online", "optionB": "Κατάστημα"},
+  {"optionA": "Pinterest", "optionB": "Instagram"},
+  {"optionA": "Pastel nails", "optionB": "Nude nails"},
+  {"optionA": "Απλή τούρτα", "optionB": "Υπερπαραγωγή"},
+  {"optionA": "Planner stickers", "optionB": "Pastel highlighters"}
+];
 
 export default function ThisOrThat() {
-  const { language } = useLanguage();
-  const [polls, setPolls] = useState<Poll[]>([]);
-  const [currentPollIndex, setCurrentPollIndex] = useState(0);
-  const [userVotes, setUserVotes] = useState<Map<string, 'a' | 'b'>>(new Map());
-  const [pollStats, setPollStats] = useState<Map<string, { a: number; b: number }>>(new Map());
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(() => 
+    Math.floor(Math.random() * dilemmas.length)
+  );
+  const [selectedOption, setSelectedOption] = useState<'A' | 'B' | null>(null);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
-  useEffect(() => {
-    fetchPolls();
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUserId(user?.id || null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
   };
 
-  const fetchPolls = async () => {
-    try {
-      const { data: pollsData, error: pollsError } = await supabase
-        .from('polls')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (pollsError) throw pollsError;
-      setPolls(pollsData || []);
-
-      // Fetch user's votes
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: votesData, error: votesError } = await supabase
-          .from('poll_votes')
-          .select('poll_id, choice')
-          .eq('user_id', user.id);
-
-        if (!votesError && votesData) {
-          const votesMap = new Map(votesData.map(v => [v.poll_id, v.choice as 'a' | 'b']));
-          setUserVotes(votesMap);
-        }
-      }
-
-      // Fetch all votes for statistics
-      const { data: allVotes, error: statsError } = await supabase
-        .from('poll_votes')
-        .select('poll_id, choice');
-
-      if (!statsError && allVotes) {
-        const stats = new Map<string, { a: number; b: number }>();
-        allVotes.forEach(vote => {
-          const current = stats.get(vote.poll_id) || { a: 0, b: 0 };
-          if (vote.choice === 'a') current.a++;
-          else current.b++;
-          stats.set(vote.poll_id, current);
-        });
-        setPollStats(stats);
-      }
-    } catch (error) {
-      console.error('Error fetching polls:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
   };
 
-  const handleVote = async (pollId: string, choice: 'a' | 'b') => {
-    if (!userId) {
-      toast.error(language === "el" ? "Συνδεθείτε για να ψηφίσετε" : "Sign in to vote");
-      return;
-    }
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
 
-    try {
-      const existingVote = userVotes.get(pollId);
-      
-      if (existingVote === choice) {
-        // Remove vote
-        const { error } = await supabase
-          .from('poll_votes')
-          .delete()
-          .eq('poll_id', pollId)
-          .eq('user_id', userId);
-
-        if (error) throw error;
-        
-        const newVotes = new Map(userVotes);
-        newVotes.delete(pollId);
-        setUserVotes(newVotes);
-      } else if (existingVote) {
-        // Update vote
-        const { error } = await supabase
-          .from('poll_votes')
-          .update({ choice })
-          .eq('poll_id', pollId)
-          .eq('user_id', userId);
-
-        if (error) throw error;
-        
-        const newVotes = new Map(userVotes);
-        newVotes.set(pollId, choice);
-        setUserVotes(newVotes);
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        navigateNext();
       } else {
-        // New vote
-        const { error } = await supabase
-          .from('poll_votes')
-          .insert({ poll_id: pollId, user_id: userId, choice });
-
-        if (error) throw error;
-        
-        const newVotes = new Map(userVotes);
-        newVotes.set(pollId, choice);
-        setUserVotes(newVotes);
+        navigatePrev();
       }
-
-      // Refresh stats
-      await fetchPolls();
-    } catch (error) {
-      console.error('Error voting:', error);
-      toast.error(language === "el" ? "Σφάλμα ψηφοφορίας" : "Error voting");
     }
   };
 
-  const nextPoll = () => {
-    setCurrentPollIndex((prev) => (prev + 1) % polls.length);
+  const navigateNext = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSlideDirection('left');
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % dilemmas.length);
+      setSelectedOption(null);
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 300);
   };
 
-  const prevPoll = () => {
-    setCurrentPollIndex((prev) => (prev - 1 + polls.length) % polls.length);
+  const navigatePrev = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSlideDirection('right');
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + dilemmas.length) % dilemmas.length);
+      setSelectedOption(null);
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 300);
   };
 
-  if (loading || polls.length === 0) {
-    return (
-      <Card className="bg-purple-50/80 border-none">
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">{language === "el" ? "Φόρτωση..." : "Loading..."}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const currentPoll = polls[currentPollIndex];
-  const stats = pollStats.get(currentPoll.id) || { a: 0, b: 0 };
-  const total = stats.a + stats.b;
-  const percentA = total > 0 ? Math.round((stats.a / total) * 100) : 0;
-  const percentB = total > 0 ? Math.round((stats.b / total) * 100) : 0;
-  const userChoice = userVotes.get(currentPoll.id);
+  const currentDilemma = dilemmas[currentIndex];
 
   return (
-    <Card className="bg-purple-50/80 border-none hover:shadow-xl transition-all">
+    <Card className="bg-purple-50/80 border-none hover:shadow-xl transition-all overflow-hidden">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
@@ -176,63 +139,73 @@ export default function ThisOrThat() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={prevPoll}
-              className="h-8 w-8 p-0 rounded-full"
+              onClick={navigatePrev}
+              disabled={isAnimating}
+              className="h-9 w-9 p-0 rounded-full hover:bg-purple-100 transition-colors"
             >
-              ←
+              <ChevronLeft className="w-5 h-5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={nextPoll}
-              className="h-8 w-8 p-0 rounded-full"
+              onClick={navigateNext}
+              disabled={isAnimating}
+              className="h-9 w-9 p-0 rounded-full hover:bg-purple-100 transition-colors"
             >
-              →
+              <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <Button
-            onClick={() => handleVote(currentPoll.id, 'a')}
-            variant={userChoice === 'a' ? 'default' : 'outline'}
-            className="h-24 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all hover:scale-105"
+        <div 
+          className="relative"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            className={`transition-all duration-300 ease-out ${
+              slideDirection === 'left' 
+                ? '-translate-x-full opacity-0' 
+                : slideDirection === 'right' 
+                ? 'translate-x-full opacity-0' 
+                : 'translate-x-0 opacity-100'
+            }`}
           >
-            <span className="text-3xl">{currentPoll.emoji_a}</span>
-            <span className="text-sm font-semibold">{currentPoll.question_a}</span>
-          </Button>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => setSelectedOption(selectedOption === 'A' ? null : 'A')}
+                variant={selectedOption === 'A' ? 'default' : 'outline'}
+                className={`h-28 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all ${
+                  selectedOption === 'A' ? 'scale-105 shadow-lg' : 'hover:scale-105'
+                }`}
+              >
+                <span className="text-3xl">💖</span>
+                <span className="text-sm font-semibold text-center px-2">{currentDilemma.optionA}</span>
+              </Button>
 
-          <Button
-            onClick={() => handleVote(currentPoll.id, 'b')}
-            variant={userChoice === 'b' ? 'default' : 'outline'}
-            className="h-24 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all hover:scale-105"
-          >
-            <span className="text-3xl">{currentPoll.emoji_b}</span>
-            <span className="text-sm font-semibold">{currentPoll.question_b}</span>
-          </Button>
+              <Button
+                onClick={() => setSelectedOption(selectedOption === 'B' ? null : 'B')}
+                variant={selectedOption === 'B' ? 'default' : 'outline'}
+                className={`h-28 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all ${
+                  selectedOption === 'B' ? 'scale-105 shadow-lg' : 'hover:scale-105'
+                }`}
+              >
+                <span className="text-3xl">✨</span>
+                <span className="text-sm font-semibold text-center px-2">{currentDilemma.optionB}</span>
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {userChoice && (
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{currentPoll.emoji_a} {percentA}%</span>
-              <span>{currentPoll.emoji_b} {percentB}%</span>
-            </div>
-            <div className="h-2 bg-secondary rounded-full overflow-hidden flex">
-              <div
-                className="bg-primary transition-all duration-500"
-                style={{ width: `${percentA}%` }}
-              />
-              <div
-                className="bg-pink-400 transition-all duration-500"
-                style={{ width: `${percentB}%` }}
-              />
-            </div>
-            <p className="text-xs text-center text-muted-foreground">
-              {total} {language === "el" ? "ψήφοι" : "votes"}
-            </p>
-          </div>
-        )}
+        <div className="mt-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            {currentIndex + 1} / {dilemmas.length}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Swipe ή χρησιμοποίησε τα βελάκια
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
