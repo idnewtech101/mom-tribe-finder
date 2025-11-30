@@ -37,6 +37,24 @@ export default function Discover() {
   const navigate = useNavigate();
   const { mascotConfig, visible, hideMascot, showMatch, showEmptyDiscover } = useMascot();
   const { profiles, loading } = useMatching();
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
+
+  // Check if current user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+        const { data: hasAdminRole } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "admin",
+        });
+        setIsUserAdmin(!!hasAdminRole);
+      }
+    };
+    checkAdminStatus();
+  }, []);
 
   // Check if tutorial has been shown before
   useEffect(() => {
@@ -46,8 +64,17 @@ export default function Discover() {
     }
   }, [loading]);
 
-  // Add demo profile to the beginning of the list
-  const allProfiles = [demoProfile, ...profiles];
+  // Filter out admin profiles and add demo profile
+  const filteredProfiles = profiles.filter(async (profile) => {
+    // Check if profile is admin
+    const { data: hasAdminRole } = await supabase.rpc("has_role", {
+      _user_id: profile.id,
+      _role: "admin",
+    });
+    return !hasAdminRole;
+  });
+  
+  const allProfiles = [demoProfile, ...filteredProfiles];
   const currentProfile = allProfiles[currentIndex];
 
   const handleSwipe = async (liked: boolean) => {
@@ -180,8 +207,12 @@ export default function Discover() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 flex items-center justify-center">
-        <div className="animate-spin text-4xl">🌸</div>
+      <div className="min-h-screen flex flex-col items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
+        <div className="absolute inset-0 bg-pink-200/20 backdrop-blur-sm"></div>
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="animate-spin-flower text-8xl mb-6">🌸</div>
+          <p className="text-base text-muted-foreground animate-pulse font-medium">Φόρτωση προφίλ...</p>
+        </div>
       </div>
     );
   }
