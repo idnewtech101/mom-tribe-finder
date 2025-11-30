@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MessageCircle, Heart, X } from "lucide-react";
+import { Heart, MapPin, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MatchedProfile {
@@ -15,114 +15,201 @@ interface MatchedProfile {
   profile_photo_url: string | null;
   city: string;
   area: string;
-  interests: string[];
+  interests: string[] | null;
   child_age_group?: string;
   child_names?: string;
+  latitude?: number;
+  longitude?: number;
+  matchScore?: number;
 }
 
-export default function MagicMatching() {
-  const navigate = useNavigate();
-  const { language } = useLanguage();
+const MagicMatching = () => {
   const [loading, setLoading] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<MatchedProfile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showNoMomsDialog, setShowNoMomsDialog] = useState(false);
+  const navigate = useNavigate();
+  const { language } = useLanguage();
 
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setIsLoggedIn(!!user);
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsLoggedIn(!!session);
+  };
+
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Calculate location score (40%)
+  const calculateLocationScore = (
+    currentArea: string,
+    targetArea: string,
+    currentLat?: number,
+    currentLon?: number,
+    targetLat?: number,
+    targetLon?: number
+  ): number => {
+    // Same area = 100%
+    if (currentArea === targetArea) return 100;
+    
+    // If coordinates available, calculate distance
+    if (currentLat && currentLon && targetLat && targetLon) {
+      const distance = calculateDistance(currentLat, currentLon, targetLat, targetLon);
+      if (distance <= 3) return 90;  // Within 3km
+      if (distance <= 5) return 70;  // Within 5km
+      if (distance <= 10) return 50; // Within 10km
+      return 30; // Further away
+    }
+    
+    return 50; // Default if no coordinates
+  };
+
+  // Calculate kids age score (35%)
+  const calculateKidsAgeScore = (currentAgeGroup: string, targetAgeGroup: string): number => {
+    if (currentAgeGroup === targetAgeGroup) return 100;
+    
+    // Parse age groups to compare similarity
+    const ageMapping: Record<string, number> = {
+      '0-1': 0,
+      '1-2': 1,
+      '2-3': 2,
+      '3-4': 3,
+      '4-5': 4,
+      '5-6': 5,
+    };
+    
+    const currentAge = ageMapping[currentAgeGroup] ?? 0;
+    const targetAge = ageMapping[targetAgeGroup] ?? 0;
+    const diff = Math.abs(currentAge - targetAge);
+    
+    if (diff === 0) return 100;
+    if (diff === 1) return 80;  // 1 year difference
+    if (diff === 2) return 60;  // 2 years difference
+    return 40; // More than 2 years
+  };
+
+  // Calculate interests score (25%)
+  const calculateInterestsScore = (currentInterests: string[], targetInterests: string[]): number => {
+    if (!currentInterests || !targetInterests) return 0;
+    
+    const commonInterests = currentInterests.filter(interest => 
+      targetInterests.includes(interest)
+    );
+    
+    const count = commonInterests.length;
+    if (count >= 5) return 100; // 5+ common = 100% + bonus
+    if (count >= 3) return 85;  // 3-4 common
+    if (count >= 2) return 70;  // 2 common
+    if (count >= 1) return 50;  // 1 common
+    return 20; // No common interests
+  };
+
+  // Calculate total match score
+  const calculateMatchScore = (
+    currentProfile: any,
+    targetProfile: any
+  ): number => {
+    const locationScore = calculateLocationScore(
+      currentProfile.area,
+      targetProfile.area,
+      currentProfile.latitude,
+      currentProfile.longitude,
+      targetProfile.latitude,
+      targetProfile.longitude
+    );
+    
+    const kidsAgeScore = calculateKidsAgeScore(
+      currentProfile.child_age_group,
+      targetProfile.child_age_group
+    );
+    
+    const interestsScore = calculateInterestsScore(
+      currentProfile.interests || [],
+      targetProfile.interests || []
+    );
+    
+    // Weighted calculation
+    const totalScore = (
+      (locationScore * 0.40) +
+      (kidsAgeScore * 0.35) +
+      (interestsScore * 0.25)
+    );
+    
+    return Math.round(totalScore);
   };
 
   const findMagicMatch = async () => {
     setLoading(true);
-    setMatchedProfile(null);
-
+    
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error(language === "el" ? "Συνδεθείτε πρώτα" : "Please sign in first");
+        toast.error(language === "el" ? "Πρέπει να συνδεθείς πρώτα" : "Please sign in first");
         navigate("/auth");
-        setLoading(false);
         return;
       }
 
       // Get current user's profile
-      const { data: currentProfile, error: currentError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
-      if (currentError) throw currentError;
-
-      // Find potential matches with similar criteria - use profiles_safe for public matching
-      const { data: potentialMatches, error: matchError } = await supabase
-        .from('profiles_safe')
-        .select('*')
-        .neq('id', user.id)
-        .eq('city', currentProfile.city);
-
-      if (matchError) throw matchError;
-
-      if (!potentialMatches || potentialMatches.length === 0) {
-        setShowNoMomsDialog(true);
-        setLoading(false);
+      if (!currentProfile) {
+        toast.error(language === "el" ? "Δεν βρέθηκε το προφίλ σου" : "Profile not found");
         return;
       }
 
-      // Filter by child ages and interests
-      const currentChildren = Array.isArray(currentProfile.children) ? currentProfile.children : [];
-      const currentInterests = Array.isArray(currentProfile.interests) ? currentProfile.interests : [];
+      // Get potential matches from profiles_safe (same city)
+      const { data: potentialMatches } = await supabase
+        .from("profiles_safe")
+        .select("*")
+        .eq("city", currentProfile.city)
+        .neq("id", user.id);
 
-      const scoredMatches = potentialMatches.map(profile => {
-        let score = 0;
-        // profiles_safe doesn't have children field, use child_age_group for scoring
-        const profileInterests = Array.isArray(profile.interests) ? profile.interests : [];
-
-        // Same area bonus
-        if (profile.area === currentProfile.area) score += 3;
-
-        // Similar child ages (simplified scoring using child_age_group)
-        if (profile.child_age_group && currentProfile.child_age_group) {
-          if (profile.child_age_group === currentProfile.child_age_group) {
-            score += 2;
-          }
-        }
-
-        // Shared interests
-        const sharedInterests = profileInterests.filter((interest: string) => 
-          currentInterests.includes(interest)
-        );
-        score += sharedInterests.length;
-
-        return { profile, score };
-      });
-
-      // Sort by score and get the best match
-      scoredMatches.sort((a, b) => b.score - a.score);
-      
-      if (scoredMatches.length > 0 && scoredMatches[0].score > 0) {
-        const bestMatch = scoredMatches[0].profile;
-        setMatchedProfile({
-          ...bestMatch,
-          interests: Array.isArray(bestMatch.interests) ? bestMatch.interests : []
-        });
-      } else {
-        // If no good matches, just pick a random one
-        const randomMatch = potentialMatches[Math.floor(Math.random() * potentialMatches.length)];
-        setMatchedProfile({
-          ...randomMatch,
-          interests: Array.isArray(randomMatch.interests) ? randomMatch.interests : []
-        });
+      if (!potentialMatches || potentialMatches.length === 0) {
+        setShowNoMomsDialog(true);
+        return;
       }
+
+      // Calculate scores for each potential match
+      const scoredMatches = potentialMatches
+        .map((profile: any) => ({
+          ...profile,
+          matchScore: calculateMatchScore(currentProfile, profile)
+        }))
+        .filter((profile: any) => profile.matchScore >= 90) // Only 90%+ matches
+        .sort((a: any, b: any) => b.matchScore - a.matchScore); // Sort by score
+
+      if (scoredMatches.length === 0) {
+        setShowNoMomsDialog(true);
+        return;
+      }
+
+      // Pick the best match (or random from top matches)
+      const topMatches = scoredMatches.filter((p: any) => p.matchScore >= 97);
+      const selectedMatch = topMatches.length > 0 
+        ? topMatches[Math.floor(Math.random() * topMatches.length)]
+        : scoredMatches[0];
+
+      setMatchedProfile(selectedMatch as MatchedProfile);
     } catch (error) {
-      console.error('Error finding match:', error);
-      toast.error(language === "el" ? "Σφάλμα αναζήτησης" : "Error finding match");
+      console.error("Error finding match:", error);
+      toast.error(language === "el" ? "Σφάλμα κατά την αναζήτηση" : "Error finding match");
     } finally {
       setLoading(false);
     }
@@ -137,181 +224,196 @@ export default function MagicMatching() {
 
       // Check if match already exists
       const { data: existingMatch } = await supabase
-        .from('matches')
-        .select('id')
+        .from("matches")
+        .select("*")
         .or(`and(user1_id.eq.${user.id},user2_id.eq.${matchedProfile.id}),and(user1_id.eq.${matchedProfile.id},user2_id.eq.${user.id})`)
         .maybeSingle();
 
-      let matchId;
-      if (existingMatch) {
-        matchId = existingMatch.id;
-      } else {
+      let matchId = existingMatch?.id;
+
+      if (!existingMatch) {
         // Create new match
         const { data: newMatch, error } = await supabase
-          .from('matches')
-          .insert({
+          .from("matches")
+          .insert([{
             user1_id: user.id,
             user2_id: matchedProfile.id
-          })
+          }])
           .select()
           .single();
 
         if (error) throw error;
         matchId = newMatch.id;
+
+        // Create notification
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            type: 'match',
+            title: language === 'el' ? 'Νέο Magic Match! 🎀' : 'New Magic Match! 🎀',
+            message: language === 'el' 
+              ? `Έχεις νέο match με την ${matchedProfile.full_name}!`
+              : `You have a new match with ${matchedProfile.full_name}!`,
+            icon: '🎀',
+            metadata: {
+              match_id: matchedProfile.id,
+              match_name: matchedProfile.full_name
+            }
+          });
       }
 
+      toast.success(`Match με την ${matchedProfile.full_name}! 💕`);
       navigate(`/chat/${matchId}`);
     } catch (error) {
-      console.error('Error creating match:', error);
-      toast.error(language === "el" ? "Σφάλμα δημιουργίας συνομιλίας" : "Error creating chat");
+      console.error("Error creating match:", error);
+      toast.error(language === "el" ? "Σφάλμα κατά τη δημιουργία match" : "Error creating match");
     }
   };
 
   return (
-    <Card className="bg-gradient-to-br from-pink-100/80 to-purple-100/80 border-none hover:shadow-xl transition-all">
-      <CardContent className="p-6">
-        <div className="text-center">
-          <h3 className="text-xl font-bold text-foreground mb-4 flex items-center justify-center gap-2" style={{ fontFamily: "'Pacifico', cursive" }}>
-            💕 Μαγικό Matching* 💕
-          </h3>
+    <>
+      <Card className="bg-gradient-to-br from-purple-100 via-pink-100 to-rose-100 border-2 border-[#F3DCE5] hover:shadow-2xl transition-all hover:scale-[1.02] relative overflow-hidden rounded-[28px]">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-300/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-300/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        
+        <CardContent className="p-8 relative z-10">
+          <div className="flex items-center justify-center mb-4">
+            <Sparkles className="w-6 h-6 text-purple-500 animate-pulse" />
+            <h3 className="text-xl font-bold text-center mx-2" style={{ fontFamily: "'Pacifico', cursive" }}>
+              Magic Matching
+            </h3>
+            <Sparkles className="w-6 h-6 text-pink-500 animate-pulse" />
+          </div>
 
           {!isLoggedIn ? (
-            <div className="space-y-4 py-4">
-              <p className="text-muted-foreground text-sm">
-                {language === "el" 
-                  ? "Βρες το τέλειο match με μία μόνο κίνηση! ✨" 
-                  : "Find your perfect match with one click! ✨"}
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                {language === "el" ? "Σύνδεση για να βρεις την τέλεια μαμά! 🌸" : "Sign in to find your perfect mom match! 🌸"}
               </p>
-              <Button
-                onClick={() => navigate('/auth')}
-                size="lg"
-                className="w-full rounded-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-semibold py-6"
-              >
-                <span className="text-xl mr-2">🌸</span>
-                {language === "el" ? "Δημιούργησε Προφίλ" : "Create Profile"}
-                <span className="text-xl ml-2">✨</span>
+              <Button onClick={() => navigate("/auth")} className="rounded-full">
+                {language === "el" ? "Σύνδεση" : "Sign In"}
               </Button>
             </div>
-          ) : (
-            <>
-              {!matchedProfile && !loading && (
-                <Button
-                  onClick={findMagicMatch}
-                  size="lg"
-                  className="w-full rounded-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white font-semibold py-6 transition-all hover:scale-105"
-                >
-                  <span className="text-xl mr-2">🌸</span>
-                  Βρες το Match σου
-                  <span className="text-xl ml-2">✨</span>
-                </Button>
-              )}
-
-              {loading && (
-                <div className="flex flex-col items-center gap-4 py-8">
-                  <div className="relative animate-bounce">
-                    <span className="text-5xl">💕</span>
-                    <span className="text-2xl absolute top-0 right-0 animate-ping">✨</span>
-                  </div>
-                  <p className="text-muted-foreground animate-pulse">
-                    {language === "el" ? "Μαγεύουμε το matching..." : "Finding your match..."}
-                  </p>
-                </div>
-              )}
-
-              {matchedProfile && (
-                <div className="space-y-4 animate-scale-in">
-                  <div className="flex flex-col items-center gap-3">
-                    <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
-                      <AvatarImage src={matchedProfile.profile_photo_url || undefined} />
-                      <AvatarFallback className="text-2xl">{matchedProfile.full_name?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-bold text-lg text-foreground">{matchedProfile.full_name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {matchedProfile.city}{matchedProfile.area ? `, ${matchedProfile.area}` : ''}
-                      </p>
-                    </div>
-                  </div>
-
-                  {matchedProfile.interests && matchedProfile.interests.length > 0 && (
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {matchedProfile.interests.slice(0, 3).map((interest, i) => (
-                        <span key={i} className="text-xs bg-white/60 px-2 py-1 rounded-full">
-                          {interest}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={sendMessage}
-                      className="flex-1 rounded-full bg-primary hover:bg-primary/90"
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      {language === "el" ? "Στείλε Μήνυμα" : "Send Message"}
-                    </Button>
-                    <Button
-                      onClick={findMagicMatch}
-                      variant="outline"
-                      className="rounded-full"
-                    >
-                      <span className="text-lg">🌸</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* No Moms Available Dialog */}
-        <Dialog open={showNoMomsDialog} onOpenChange={setShowNoMomsDialog}>
-          <DialogContent className="max-w-md bg-gradient-to-br from-[#FDF7F9] to-[#F5E8F0] border-2 border-[#F3DCE5] rounded-[32px]">
-            <button 
-              onClick={() => setShowNoMomsDialog(false)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+          ) : !matchedProfile && !loading ? (
+            <Button 
+              onClick={findMagicMatch} 
+              className="w-full rounded-[25px] h-12 text-base bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500"
             >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <DialogHeader>
-              <DialogTitle className="text-2xl text-center pt-4" style={{ fontFamily: "'Pacifico', cursive" }}>
-                Δεν υπάρχουν νέες μαμάδες εδώ γύρω… ακόμα! 🌸
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4 text-center py-6">
-              <p className="text-base text-foreground/90 leading-relaxed">
-                Η γειτονιά είναι λίγο ήσυχη αυτή τη στιγμή,<br />
-                αλλά οι μαμάδες εμφανίζονται συνέχεια! ✨
+              🎀 {language === "el" ? "Βρες την Τέλεια Μαμά" : "Find Your Perfect Match"}
+            </Button>
+          ) : loading ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="text-6xl animate-spin-flower mb-4">🌸</div>
+              <p className="text-sm text-muted-foreground animate-pulse">
+                {language === "el" ? "Ψάχνουμε την τέλεια μαμά για σένα..." : "Finding your perfect match..."}
               </p>
-              
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>• Μείνε συντονισμένη — νέες μαμάδες μπαίνουν κάθε μέρα 💕</p>
-                <p>• Δοκίμασε πάλι σε λίγο!</p>
-                <p>• Στο μεταξύ, μπορείς να φτιάξεις το προφίλ σου ακόμη πιο όμορφο ✨</p>
+            </div>
+          ) : matchedProfile ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <img 
+                    src={matchedProfile.profile_photo_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400"}
+                    alt={matchedProfile.full_name}
+                    className="w-20 h-20 rounded-full object-cover border-4 border-pink-200"
+                  />
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md">
+                    <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-lg">{matchedProfile.full_name}</h4>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    <span>{matchedProfile.area}, {matchedProfile.city}</span>
+                  </div>
+                  {matchedProfile.matchScore && (
+                    <Badge className="mt-1 bg-gradient-to-r from-purple-400 to-pink-400 text-white border-none">
+                      ✨ {language === "el" ? "Ταιριάζετε κατά" : "Match"} {matchedProfile.matchScore}%! 
+                      {matchedProfile.matchScore >= 97 && " 🔮 Super Match!"}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={() => navigate('/profile-setup')}
-                  className="flex-1 rounded-[30px] bg-gradient-to-r from-[#C8788D] to-[#B86B80]"
+
+              {matchedProfile.interests && matchedProfile.interests.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold mb-2 flex items-center gap-1">
+                    <span>💗</span> {language === "el" ? "Κοινά Ενδιαφέροντα:" : "Common Interests:"}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {matchedProfile.interests.slice(0, 4).map((interest) => (
+                      <Badge key={interest} variant="secondary" className="text-xs">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={sendMessage}
+                  className="flex-1 rounded-[25px] bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500"
                 >
-                  ✨ Επεξεργασία Προφίλ
+                  💌 {language === "el" ? "Στείλε Μήνυμα" : "Send Message"}
                 </Button>
-                <Button
-                  onClick={() => setShowNoMomsDialog(false)}
+                <Button 
+                  onClick={() => {
+                    setMatchedProfile(null);
+                    findMagicMatch();
+                  }}
                   variant="outline"
-                  className="rounded-[30px] border-2 border-[#F3DCE5]"
+                  className="rounded-[25px]"
                 >
-                  OK
+                  🔄
                 </Button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </CardContent>
-    </Card>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      {/* No Moms Dialog */}
+      <Dialog open={showNoMomsDialog} onOpenChange={setShowNoMomsDialog}>
+        <DialogContent className="rounded-[28px] max-w-sm bg-gradient-to-br from-[#FDF7F9] to-[#F5E8F0] border-2 border-[#F3DCE5]">
+          <button 
+            onClick={() => setShowNoMomsDialog(false)}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <DialogHeader>
+            <DialogTitle className="text-center pt-4" style={{ fontFamily: "'Pacifico', cursive" }}>
+              {language === "el" 
+                ? "Δεν βρέθηκε τέλεια μαμά... ακόμα! 🌸"
+                : "No perfect match found... yet! 🌸"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center space-y-4 py-6">
+            <div className="text-6xl">💫</div>
+            <p className="text-sm text-muted-foreground">
+              {language === "el" 
+                ? "Δεν βρέθηκε μαμά που να ταιριάζει πάνω από 90%. Προσπάθησε ξανά αύριο!"
+                : "No mom matching over 90% found. Try again tomorrow!"}
+            </p>
+            <Button 
+              onClick={() => {
+                setShowNoMomsDialog(false);
+                navigate("/profile-setup");
+              }}
+              variant="outline"
+              className="rounded-full"
+            >
+              {language === "el" ? "Επεξεργασία Προφίλ" : "Edit Profile"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-}
+};
+
+export default MagicMatching;

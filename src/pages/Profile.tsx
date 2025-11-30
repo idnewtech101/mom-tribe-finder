@@ -109,7 +109,8 @@ export default function ProfileNew() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0)' }}>
-        <div className="animate-spin text-4xl">🌸</div>
+        <div className="animate-spin-flower text-6xl">🌸</div>
+        <p className="text-sm text-muted-foreground mt-4 animate-pulse">Φόρτωση προφίλ...</p>
       </div>
     );
   }

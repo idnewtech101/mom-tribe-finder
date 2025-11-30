@@ -37,6 +37,7 @@ export default function ChatView() {
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [showSafetyTip, setShowSafetyTip] = useState(true);
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -251,6 +252,27 @@ export default function ChatView() {
             </div>
           );
         })}
+        
+        {/* Typing Indicator */}
+        {isOtherUserTyping && (
+          <div className="flex gap-2 justify-start">
+            <Avatar className="w-8 h-8 mt-1">
+              <AvatarImage src={otherUser?.profile_photo_url} />
+              <AvatarFallback>{otherUser?.full_name?.[0]}</AvatarFallback>
+            </Avatar>
+            <Card className="bg-[#EAE2FF] border-[#EAE2FF] rounded-[18px] rounded-bl-sm px-4 py-3">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground mr-2">μαμά πληκτρολογεί</span>
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-primary rounded-full typing-dot"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full typing-dot"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full typing-dot"></div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 
