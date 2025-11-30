@@ -23,12 +23,11 @@ export default function MomsterPopup({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
       <div
-        className="relative w-[90%] max-w-[420px] flex flex-col items-center"
+        className="relative w-[90%] max-w-[420px] flex flex-col items-center bg-white"
         style={{
-          backgroundColor: "#F8E9EE",
-          borderRadius: "28px",
-          padding: "28px 22px",
-          boxShadow: "0 6px 22px rgba(0,0,0,0.08)",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 10px 40px rgba(192, 107, 142, 0.15), 0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
         {/* Mascot top right */}
@@ -37,37 +36,40 @@ export default function MomsterPopup({
           alt="Momster Mascot"
           className="absolute animate-bounce"
           style={{
-            top: "-12px",
-            right: "-12px",
-            width: "72px",
-            height: "72px",
+            top: "-20px",
+            right: "-20px",
+            width: "80px",
+            height: "80px",
             borderRadius: "50%",
-            backgroundColor: "rgba(243, 220, 229, 0.35)",
-            padding: "8px",
-            boxShadow: "0 3px 10px rgba(0,0,0,0.10)",
+            backgroundColor: "#F8E9EE",
+            padding: "10px",
+            boxShadow: "0 4px 16px rgba(192, 107, 142, 0.2)",
             transform: "rotate(5deg)",
             animationDuration: "2s",
           }}
         />
 
-        {/* Title */}
+        {/* Title with emoji */}
         <h2
-          className="text-center font-bold mt-3 mb-2.5"
+          className="text-center font-semibold mt-4 mb-3"
           style={{
-            fontSize: "22px",
+            fontSize: "24px",
             color: "#C06B8E",
+            fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
+            letterSpacing: "-0.01em",
           }}
         >
-          {title}
+          {title} ✨
         </h2>
 
         {/* Subtitle */}
         <p
           className="text-center mb-5"
           style={{
-            fontSize: "15px",
-            lineHeight: "1.45",
-            color: "#9C6A7A",
+            fontSize: "16px",
+            lineHeight: "1.5",
+            color: "#7A4660",
+            fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
           }}
         >
           {subtitle}
@@ -93,16 +95,17 @@ export default function MomsterPopup({
         {/* Button */}
         <Button
           onClick={onButtonClick}
-          className="w-full transition-all hover:scale-[1.02]"
+          className="w-full transition-all hover:scale-[1.03] hover:shadow-lg"
           style={{
-            padding: "14px",
-            borderRadius: "22px",
+            padding: "16px",
+            borderRadius: "12px",
             backgroundColor: "#E9C4D4",
             color: "#7A4660",
             fontSize: "16px",
             fontWeight: "600",
             border: "none",
-            boxShadow: "0 3px 12px rgba(0,0,0,0.10)",
+            boxShadow: "0 4px 16px rgba(233, 196, 212, 0.4)",
+            fontFamily: "'Poppins', 'Segoe UI', system-ui, sans-serif",
           }}
         >
           {buttonText}
