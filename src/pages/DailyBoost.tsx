@@ -340,6 +340,18 @@ export default function DailyBoost() {
                 <p className="text-orange-700 italic">{moodQuote}</p>
               </div>
             )}
+            
+            {/* Mascot at bottom right looking at emojis */}
+            <img
+              src={mascot}
+              alt="Momster Mascot"
+              className="absolute bottom-3 right-3 w-16 h-16 rounded-full object-cover"
+              style={{
+                opacity: 0.25,
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+                transform: 'rotate(-5deg)'
+              }}
+            />
           </Card>
         </div>
 
