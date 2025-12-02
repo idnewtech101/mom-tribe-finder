@@ -98,6 +98,27 @@ export default function Recipes() {
         </p>
       </div>
 
+      {/* Banner - Send Your Recipe */}
+      <div className="p-4">
+        <div className="bg-gradient-to-r from-pink-50 to-orange-50 border border-pink-200 rounded-2xl p-4 shadow-sm">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-foreground mb-1">
+              🌸 Στείλε τη δική σου συνταγή! 🌸
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Στείλε τη στο{" "}
+              <a 
+                href="mailto:momster.helpdesk@gmail.com" 
+                className="text-primary font-medium hover:underline"
+              >
+                momster.helpdesk@gmail.com
+              </a>{" "}
+              και μοιράσου την με άλλες μαμάδες της κοινότητάς μας. 👩‍🍳💕
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="p-4">
         <Dialog>

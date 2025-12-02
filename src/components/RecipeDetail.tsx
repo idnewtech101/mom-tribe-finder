@@ -212,26 +212,45 @@ export function RecipeDetail({ recipeId, open, onOpenChange }: RecipeDetailProps
             <label className="text-sm font-medium mb-2 block">
               ✏️ Επιθυμητές Μερίδες
             </label>
-            <Input
-              type="number"
-              min="1"
-              value={desiredServings}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '') {
-                  setDesiredServings(1);
-                } else {
-                  const num = Number(value);
-                  if (num > 0) setDesiredServings(num);
-                }
-              }}
-              onBlur={(e) => {
-                if (e.target.value === '' || Number(e.target.value) < 1) {
-                  setDesiredServings(1);
-                }
-              }}
-              className="w-24"
-            />
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setDesiredServings(prev => Math.max(1, prev - 1))}
+                disabled={desiredServings <= 1}
+                className="h-10 w-10 rounded-full"
+              >
+                <span className="text-lg font-bold">−</span>
+              </Button>
+              <Input
+                type="number"
+                min="1"
+                value={desiredServings}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    setDesiredServings(1);
+                  } else {
+                    const num = Number(value);
+                    if (num > 0) setDesiredServings(num);
+                  }
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === '' || Number(e.target.value) < 1) {
+                    setDesiredServings(1);
+                  }
+                }}
+                className="w-20 text-center text-lg font-semibold"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setDesiredServings(prev => prev + 1)}
+                className="h-10 w-10 rounded-full"
+              >
+                <span className="text-lg font-bold">+</span>
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
