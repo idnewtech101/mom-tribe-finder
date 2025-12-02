@@ -92,25 +92,34 @@ export function RecipeDetail({ recipeId, open, onOpenChange }: RecipeDetailProps
     );
   }
 
-  // Calculate multiplier based on portion mode
-  const getServingsForMode = () => {
-    switch (portionMode) {
-      case 'baby':
-        return 1;
-      case 'toddler':
-        return 2;
-      case 'family':
-        return 4;
-      default:
-        return desiredServings;
-    }
-  };
-
-  const multiplier = getServingsForMode() / recipe.base_servings;
+  // Calculate multiplier based on desired servings directly
+  const multiplier = desiredServings / recipe.base_servings;
 
   const calculateAmount = (amount: number) => {
     const calculated = amount * multiplier;
     return Number.isInteger(calculated) ? calculated : calculated.toFixed(1);
+  };
+
+  // Update servings when portion mode changes
+  const handlePortionModeChange = () => {
+    const modes: Array<'baby' | 'toddler' | 'family'> = ['baby', 'toddler', 'family'];
+    const currentIndex = modes.indexOf(portionMode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    const nextMode = modes[nextIndex];
+    setPortionMode(nextMode);
+    
+    // Update servings based on mode
+    switch (nextMode) {
+      case 'baby':
+        setDesiredServings(1);
+        break;
+      case 'toddler':
+        setDesiredServings(2);
+        break;
+      case 'family':
+        setDesiredServings(4);
+        break;
+    }
   };
 
   return (
@@ -152,12 +161,7 @@ export function RecipeDetail({ recipeId, open, onOpenChange }: RecipeDetailProps
             <Button
               variant="outline"
               className="w-full rounded-full bg-pink-50/80 hover:bg-pink-100/80 border-pink-200 h-auto py-3"
-              onClick={() => {
-                const modes: Array<'baby' | 'toddler' | 'family'> = ['baby', 'toddler', 'family'];
-                const currentIndex = modes.indexOf(portionMode);
-                const nextIndex = (currentIndex + 1) % modes.length;
-                setPortionMode(modes[nextIndex]);
-              }}
+              onClick={handlePortionModeChange}
             >
               <span className="mr-2">🔄</span>
               <span className="text-xs font-semibold">
