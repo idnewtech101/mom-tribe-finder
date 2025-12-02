@@ -19,6 +19,7 @@ import AppSettings from "@/components/admin/AppSettings";
 import SystemLogs from "@/components/admin/SystemLogs";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import { TestAccountsManager } from "@/components/admin/TestAccountsManager";
+import RecipesManagement from "@/components/admin/RecipesManagement";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -296,6 +297,7 @@ export default function Admin() {
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
             <TabsTrigger value="emails">Emails</TabsTrigger>
+            <TabsTrigger value="recipes">Συνταγές</TabsTrigger>
             <TabsTrigger value="test-accounts">Test Accounts</TabsTrigger>
           </TabsList>
 
@@ -329,6 +331,10 @@ export default function Admin() {
 
           <TabsContent value="logs">
             <SystemLogs />
+          </TabsContent>
+
+          <TabsContent value="recipes">
+            <RecipesManagement />
           </TabsContent>
 
           <TabsContent value="verifications" className="space-y-4">
