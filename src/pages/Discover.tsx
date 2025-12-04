@@ -11,6 +11,7 @@ import MomsterPopup from "@/components/MomsterPopup";
 import { useMascot } from "@/hooks/use-mascot";
 import { useMatching, ProfileMatch } from "@/hooks/use-matching";
 import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
+import { ProfilePhotoCarousel } from "@/components/ProfilePhotoCarousel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // Demo profile for testing UI
@@ -313,9 +314,19 @@ export default function Discover() {
     return `${count} ${count === 1 ? 'παιδί' : 'παιδιά'} (${ages})`;
   };
 
-  const profileImage = currentProfile.profile_photos_urls && currentProfile.profile_photos_urls.length > 0
-    ? currentProfile.profile_photos_urls[0]
-    : currentProfile.profile_photo_url || `https://i.pravatar.cc/400?u=${currentProfile.id}`;
+  // Collect all profile photos
+  const profilePhotos = (() => {
+    const photos: string[] = [];
+    if (currentProfile.profile_photos_urls && currentProfile.profile_photos_urls.length > 0) {
+      photos.push(...currentProfile.profile_photos_urls);
+    } else if (currentProfile.profile_photo_url) {
+      photos.push(currentProfile.profile_photo_url);
+    }
+    if (photos.length === 0) {
+      photos.push(`https://i.pravatar.cc/400?u=${currentProfile.id}`);
+    }
+    return photos;
+  })();
 
   // Get match percentage color
   const getMatchColor = (percentage: number) => {
@@ -390,13 +401,10 @@ export default function Discover() {
           onTouchEnd={onTouchEnd}
         >
           <div className="relative">
-            <img
-              src={profileImage}
-              alt={currentProfile.full_name}
-              className="w-full h-56 object-cover cursor-pointer"
-              onClick={() => {
-                navigate(`/profile/${currentProfile.id}`);
-              }}
+            <ProfilePhotoCarousel
+              photos={profilePhotos}
+              profileName={currentProfile.full_name}
+              onImageClick={() => navigate(`/profile/${currentProfile.id}`)}
             />
             
             {/* Match Percentage Badge */}
