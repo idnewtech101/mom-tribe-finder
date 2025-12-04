@@ -1,33 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Heart, ShoppingBag, Sparkles } from "lucide-react";
+import { Heart, ShoppingBag, Sparkles, CheckCircle2 } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// Storage key for subscription state
+const MARKETPLACE_SUBSCRIBED_KEY = "momster_marketplace_subscribed";
+
+// Analytics tracking helper
+const trackEvent = (eventName: string, data?: Record<string, any>) => {
+  console.log(`[Analytics] ${eventName}`, data || {});
+  // Future: integrate with analytics service
+  try {
+    // Store in localStorage for basic tracking
+    const events = JSON.parse(localStorage.getItem("momster_analytics") || "[]");
+    events.push({
+      event: eventName,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem("momster_analytics", JSON.stringify(events.slice(-100))); // Keep last 100 events
+  } catch (e) {
+    console.error("Analytics error:", e);
+  }
+};
+
 export default function Marketplace() {
   const [showRules, setShowRules] = useState(false);
   const [showWaitlistForm, setShowWaitlistForm] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [email, setEmail] = useState("");
-  const [notified, setNotified] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const { toast } = useToast();
 
+  // Check localStorage on mount for subscription state
+  useEffect(() => {
+    const subscribed = localStorage.getItem(MARKETPLACE_SUBSCRIBED_KEY);
+    if (subscribed === "true") {
+      setIsSubscribed(true);
+    }
+    
+    // Track page visit
+    trackEvent("marketplace_page_view");
+  }, []);
+
+  // Email validation
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleOpenWaitlist = () => {
+    trackEvent("market_subscribe_click");
     setShowWaitlistForm(true);
+    setEmailError("");
   };
 
   const handleSubmitWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError("");
     
-    if (!email || !email.includes('@')) {
-      toast({
-        title: "❌ Σφάλμα",
-        description: "Παρακαλώ βάλε ένα έγκυρο email",
-      });
+    // Validate email
+    if (!email.trim()) {
+      setEmailError("Παρακαλώ βάλε έγκυρο email 😊");
+      trackEvent("market_subscribe_fail", { reason: "empty_email" });
       return;
     }
+
+    if (!validateEmail(email)) {
+      setEmailError("Παρακαλώ βάλε έγκυρο email 😊");
+      trackEvent("market_subscribe_fail", { reason: "invalid_format" });
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -40,15 +90,15 @@ export default function Marketplace() {
         .single();
 
       if (existing) {
-        toast({
-          title: "✅ Ήδη εγγεγραμμένη!",
-          description: "Αυτό το email είναι ήδη στη λίστα αναμονής!",
-        });
-        setNotified(true);
+        setIsSubscribed(true);
+        localStorage.setItem(MARKETPLACE_SUBSCRIBED_KEY, "true");
         setShowWaitlistForm(false);
+        setShowSuccessPopup(true);
+        trackEvent("market_subscribe_success", { already_subscribed: true });
         return;
       }
 
+      // Insert into database
       const { error } = await supabase
         .from('marketplace_notifications')
         .insert([{
@@ -58,19 +108,40 @@ export default function Marketplace() {
 
       if (error) throw error;
 
-      setNotified(true);
+      // Send confirmation email via edge function
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-marketplace-confirmation', {
+          body: { email }
+        });
+        
+        if (emailError) {
+          console.error("Email sending error:", emailError);
+        } else {
+          console.log("Confirmation email sent successfully");
+        }
+      } catch (emailErr) {
+        console.error("Failed to send confirmation email:", emailErr);
+        // Don't fail the whole process if email fails
+      }
+
+      // Update state
+      setIsSubscribed(true);
+      localStorage.setItem(MARKETPLACE_SUBSCRIBED_KEY, "true");
       setShowWaitlistForm(false);
       setEmail("");
-      toast({
-        title: "🌷 Τέλεια!",
-        description: "Θα σε ενημερώσουμε μόλις ανοίξει το Marketplace!",
-      });
+      setShowSuccessPopup(true);
+      
+      trackEvent("market_subscribe_success", { email_sent: true });
+      
     } catch (error) {
       console.error('Error subscribing:', error);
+      trackEvent("market_subscribe_fail", { reason: "database_error" });
       toast({
         title: "❌ Σφάλμα",
         description: "Κάτι πήγε στραβά, δοκίμασε ξανά!",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -203,11 +274,22 @@ export default function Marketplace() {
           <div className="space-y-3">
             <Button 
               onClick={handleOpenWaitlist}
-              disabled={notified}
-              className="w-full text-base"
+              disabled={isSubscribed}
+              className={`w-full text-base transition-all duration-300 ${
+                isSubscribed 
+                  ? "bg-green-500 hover:bg-green-500 text-white" 
+                  : ""
+              }`}
               size="lg"
             >
-              💞 {notified ? "Θα σε ειδοποιήσουμε!" : "Θέλω να ειδοποιηθώ όταν ανοίξει"}
+              {isSubscribed ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  Εγγράφηκες ✔️
+                </>
+              ) : (
+                "💞 Θέλω να ειδοποιηθώ όταν ανοίξει"
+              )}
             </Button>
             
             <Button 
@@ -254,21 +336,71 @@ export default function Marketplace() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError("");
+                }}
                 placeholder="your.email@example.com"
-                className="w-full mt-1 px-4 py-3 rounded-2xl border-2 border-[#F3DCE5] focus:border-primary focus:outline-none"
+                className={`w-full mt-1 px-4 py-3 rounded-2xl border-2 focus:outline-none transition-colors ${
+                  emailError 
+                    ? "border-red-400 focus:border-red-500" 
+                    : "border-[#F3DCE5] focus:border-primary"
+                }`}
                 required
               />
+              {emailError && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  ⚠️ {emailError}
+                </p>
+              )}
             </div>
             
             <Button 
               type="submit" 
               className="w-full rounded-[30px] text-base"
               size="lg"
+              disabled={isSubmitting}
             >
-              ✨ Ειδοποίησέ με
+              {isSubmitting ? "⏳ Περίμενε..." : "✨ Ειδοποίησέ με"}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Confirmation Popup */}
+      <Dialog open={showSuccessPopup} onOpenChange={setShowSuccessPopup}>
+        <DialogContent className="max-w-sm text-center">
+          <div className="py-4 space-y-4">
+            <div className="flex justify-center">
+              <img 
+                src={mascot} 
+                alt="Momster Mascot" 
+                className="w-24 h-24 object-contain animate-bounce"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+                Ευχαριστούμε! 💕
+              </h3>
+              <p className="text-muted-foreground">
+                Θα ειδοποιηθείς μόλις ανοίξει το Marketplace 🌸
+              </p>
+            </div>
+            
+            <div className="bg-secondary/30 rounded-xl p-4">
+              <p className="text-sm text-foreground">
+                Έλεγξε το email σου για επιβεβαίωση! 📧
+              </p>
+            </div>
+            
+            <Button 
+              onClick={() => setShowSuccessPopup(false)}
+              className="w-full"
+            >
+              Τέλεια! 🌷
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
