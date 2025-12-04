@@ -79,7 +79,11 @@ export default function CookieConsent() {
               Με τα cookies μπορούμε να θυμόμαστε τις προτιμήσεις σου, να βελτιώνουμε τη λειτουργικότητα και να κρατάμε ασφαλή τη σύνδεσή σου.
             </p>
             <p>
-              Πατώντας «Αποδέχομαι», συμφωνείς στη χρήση cookies όπως περιγράφεται στην Πολιτική Απορρήτου μας.
+              Πατώντας «Αποδέχομαι», συμφωνείς στη χρήση cookies όπως περιγράφεται στην{" "}
+              <a href="/privacy-terms" target="_blank" className="text-primary hover:underline font-medium">
+                Πολιτική Απορρήτου
+              </a>{" "}
+              μας.
             </p>
             <p className="text-sm text-muted-foreground italic">
               Μπορείς να αλλάξεις τις επιλογές σου οποτεδήποτε μέσα από τις Ρυθμίσεις.

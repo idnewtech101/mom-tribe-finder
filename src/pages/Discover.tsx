@@ -41,6 +41,7 @@ export default function Discover() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showNoMomsPopup, setShowNoMomsPopup] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [showDailyMascot, setShowDailyMascot] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -117,6 +118,23 @@ export default function Discover() {
       setShowTutorial(true);
     }
   }, [loading]);
+
+  // Show daily mascot popup (once per day)
+  useEffect(() => {
+    if (!loading) {
+      const lastShown = localStorage.getItem('daily_mascot_shown');
+      const today = new Date().toDateString();
+      
+      if (lastShown !== today) {
+        // Delay popup so it doesn't overlap with other dialogs
+        setTimeout(() => {
+          if (!showLocationDialog && !showTutorial) {
+            setShowDailyMascot(true);
+          }
+        }, 1500);
+      }
+    }
+  }, [loading, showLocationDialog, showTutorial]);
 
   // Filter out current user and add demo profile
   const filteredProfiles = profiles.filter(profile => profile.id !== currentUserId);
@@ -626,6 +644,18 @@ export default function Discover() {
         onButtonClick={() => {
           setShowNoMomsPopup(false);
           navigate("/matching-filters");
+        }}
+      />
+
+      {/* Daily Mascot Greeting - Once per day */}
+      <MomsterPopup
+        visible={showDailyMascot}
+        title="Καλημέρα μαμά!"
+        subtitle="Είσαι έτοιμη να γνωρίσεις νέες μαμάδες σήμερα; Σύρε για να βρεις το επόμενο match σου! 💕"
+        buttonText="Πάμε! 🌸"
+        onButtonClick={() => {
+          setShowDailyMascot(false);
+          localStorage.setItem('daily_mascot_shown', new Date().toDateString());
         }}
       />
     </div>
