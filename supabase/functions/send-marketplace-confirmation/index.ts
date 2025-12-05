@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "Momster <noreply@momster.app>",
+      from: "Momster <onboarding@resend.dev>",
       to: [email],
       subject: "🎀 Καλωσόρισες στο Momster Marketplace!",
       html: `
