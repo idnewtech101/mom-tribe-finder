@@ -261,7 +261,7 @@ export default function Discover() {
   }, [allProfiles.length, loading, showEmptyDiscover]);
 
   // Debug logging
-  console.log("Discover render - loading:", loading, "profiles:", profiles.length, "allProfiles:", allProfiles.length, "currentIndex:", currentIndex, "currentProfile:", currentProfile?.full_name);
+  // console.log("Discover render - loading:", loading, "profiles:", profiles.length, "allProfiles:", allProfiles.length, "currentIndex:", currentIndex, "currentProfile:", currentProfile?.full_name);
 
   if (loading) {
     return (
@@ -346,11 +346,6 @@ export default function Discover() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 relative">
-      {/* Debug info - remove later */}
-      <div className="fixed top-0 left-0 right-0 bg-green-500 text-white text-xs p-1 z-50 text-center">
-        Debug: profiles={profiles.length}, currentProfile={currentProfile?.full_name || 'none'}
-      </div>
-      
       {/* Location Permission Dialog */}
       <LocationPermissionDialog
         open={showLocationDialog}
@@ -621,12 +616,14 @@ export default function Discover() {
       </footer>
 
       {/* Mascot */}
-      <MomsterMascot
-        message={mascotConfig.message}
-        state="happy"
-        visible={visible}
-        onHide={hideMascot}
-      />
+      {mascotConfig && (
+        <MomsterMascot
+          message={mascotConfig.message}
+          state="happy"
+          visible={visible}
+          onHide={hideMascot}
+        />
+      )}
 
       {/* Tutorial Overlay */}
       {showTutorial && (
