@@ -39,6 +39,8 @@ export default function Discover() {
   const [showMatchVideo, setShowMatchVideo] = useState(false);
   const [showMatchConfetti, setShowMatchConfetti] = useState(false);
   const [isFirstMatch, setIsFirstMatch] = useState(false);
+  const [showNopeEmoji, setShowNopeEmoji] = useState(false);
+  const [showHeartEmoji, setShowHeartEmoji] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -153,6 +155,12 @@ export default function Discover() {
   const handleSwipe = async (liked: boolean) => {
     console.log(liked ? "Liked!" : "Passed");
     
+    // Show quick emoji feedback
+    if (!liked) {
+      setShowNopeEmoji(true);
+      setTimeout(() => setShowNopeEmoji(false), 400);
+    }
+    
     const nextIndex = currentIndex + 1;
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -169,21 +177,27 @@ export default function Discover() {
         if (error) {
           console.error('Error checking mutual match:', error);
         } else if (data?.mutualMatch) {
-          // Check if this is the first match ever
+          // Check if this is the first match ever - show confetti only for first match
           const firstMatchShown = localStorage.getItem('first_match_confetti_shown');
           if (!firstMatchShown) {
             setIsFirstMatch(true);
             setShowMatchConfetti(true);
             localStorage.setItem('first_match_confetti_shown', 'true');
+            setShowMatchVideo(true);
+            setTimeout(() => {
+              setShowMatchVideo(false);
+              setShowMatchConfetti(false);
+              setIsFirstMatch(false);
+              showMatch(() => navigate("/chats"));
+            }, 2000);
+          } else {
+            // Subsequent matches - just show a quick heart animation
+            setShowHeartEmoji(true);
+            setTimeout(() => {
+              setShowHeartEmoji(false);
+              showMatch(() => navigate("/chats"));
+            }, 800);
           }
-          
-          setShowMatchVideo(true);
-          setTimeout(() => {
-            setShowMatchVideo(false);
-            setShowMatchConfetti(false);
-            setIsFirstMatch(false);
-            showMatch(() => navigate("/chats"));
-          }, 3000);
         }
       } catch (error) {
         console.error('Error in handleSwipe:', error);
@@ -711,16 +725,28 @@ export default function Discover() {
       {/* Confetti Effect for First Match */}
       <ConfettiEffect trigger={showMatchConfetti && isFirstMatch} />
 
-      {/* Match Celebration Video */}
-      {showMatchVideo && (
+      {/* Quick Nope Emoji */}
+      {showNopeEmoji && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="text-6xl animate-scale-in opacity-80">🚫</div>
+        </div>
+      )}
+
+      {/* Quick Heart Emoji for subsequent matches */}
+      {showHeartEmoji && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/20">
+          <div className="text-8xl animate-scale-in">💕</div>
+        </div>
+      )}
+
+      {/* Match Celebration Video - Only for first match */}
+      {showMatchVideo && isFirstMatch && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-          {isFirstMatch && (
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center z-10">
-              <div className="bg-gradient-to-r from-pink-400 to-purple-400 text-white px-6 py-3 rounded-full shadow-lg animate-bounce">
-                <span className="text-xl font-bold">🎉 Πρώτο Match! 🎉</span>
-              </div>
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center z-10">
+            <div className="bg-gradient-to-r from-pink-400 to-purple-400 text-white px-6 py-3 rounded-full shadow-lg animate-bounce">
+              <span className="text-xl font-bold">🎉 Πρώτο Match! 🎉</span>
             </div>
-          )}
+          </div>
           <video
             autoPlay
             muted
