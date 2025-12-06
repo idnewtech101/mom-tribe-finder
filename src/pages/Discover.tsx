@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import mascot from "@/assets/mascot.jpg";
 import MomsterMascot from "@/components/MomsterMascot";
 import MomsterPopup from "@/components/MomsterPopup";
+import ConfettiEffect from "@/components/ConfettiEffect";
 import { useMascot } from "@/hooks/use-mascot";
 import { useMatching, ProfileMatch } from "@/hooks/use-matching";
 import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
@@ -36,6 +37,8 @@ const demoProfile: ProfileMatch = {
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchVideo, setShowMatchVideo] = useState(false);
+  const [showMatchConfetti, setShowMatchConfetti] = useState(false);
+  const [isFirstMatch, setIsFirstMatch] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -166,9 +169,19 @@ export default function Discover() {
         if (error) {
           console.error('Error checking mutual match:', error);
         } else if (data?.mutualMatch) {
+          // Check if this is the first match ever
+          const firstMatchShown = localStorage.getItem('first_match_confetti_shown');
+          if (!firstMatchShown) {
+            setIsFirstMatch(true);
+            setShowMatchConfetti(true);
+            localStorage.setItem('first_match_confetti_shown', 'true');
+          }
+          
           setShowMatchVideo(true);
           setTimeout(() => {
             setShowMatchVideo(false);
+            setShowMatchConfetti(false);
+            setIsFirstMatch(false);
             showMatch(() => navigate("/chats"));
           }, 3000);
         }
@@ -591,14 +604,14 @@ export default function Discover() {
           <>
             {/* Premium Actions */}
             <div className="flex justify-center gap-4 mt-4">
-              <Button
+            <Button
                 disabled
                 size="sm"
                 variant="outline"
                 className="rounded-full border-2 border-[#F3DCE5] opacity-50 cursor-not-allowed"
               >
                 <Heart className="w-4 h-4 mr-1" />
-                Super Yes*
+                Super Mom Like*
               </Button>
               <Button
                 disabled
@@ -718,9 +731,19 @@ export default function Discover() {
         </div>
       )}
 
+      {/* Confetti Effect for First Match */}
+      <ConfettiEffect trigger={showMatchConfetti && isFirstMatch} />
+
       {/* Match Celebration Video */}
       {showMatchVideo && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+          {isFirstMatch && (
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center z-10">
+              <div className="bg-gradient-to-r from-pink-400 to-purple-400 text-white px-6 py-3 rounded-full shadow-lg animate-bounce">
+                <span className="text-xl font-bold">🎉 Πρώτο Match! 🎉</span>
+              </div>
+            </div>
+          )}
           <video
             autoPlay
             muted

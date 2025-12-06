@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
 import { INTERESTS } from "@/lib/interests";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ProfileSuccessScreen from "@/components/ProfileSuccessScreen";
 
 const profileSetupSchema = z.object({
   username: z.string().trim().min(3, { message: "Το username πρέπει να είναι τουλάχιστον 3 χαρακτήρες" }).max(20, { message: "Το username πρέπει να είναι μικρότερο από 20 χαρακτήρες" }).regex(/^[a-zA-Z0-9_]+$/, { message: "Το username μπορεί να περιέχει μόνο γράμματα, αριθμούς και _" }),
@@ -85,6 +86,8 @@ export default function ProfileSetup() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -302,18 +305,22 @@ export default function ProfileSetup() {
         .eq('id', userId)
         .single();
 
-      toast.success("Το προφίλ σας ολοκληρώθηκε!");
+      // Show success screen before navigating
+      const destination = !updatedProfile?.has_completed_onboarding ? "/onboarding" : "/discover";
+      setPendingNavigation(destination);
+      setShowSuccessScreen(true);
       
-      // If onboarding not completed, go there, otherwise go to discover
-      if (!updatedProfile?.has_completed_onboarding) {
-        navigate("/onboarding");
-      } else {
-        navigate("/discover");
-      }
     } catch (error: any) {
       toast.error(error.message || "Σφάλμα κατά την ενημέρωση του προφίλ");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSuccessContinue = () => {
+    setShowSuccessScreen(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
     }
   };
 
@@ -611,6 +618,12 @@ export default function ProfileSetup() {
         open={showLocationDialog}
         onAllow={handleLocationAllow}
         onDeny={handleLocationDeny}
+      />
+
+      {/* Profile Success Screen */}
+      <ProfileSuccessScreen 
+        visible={showSuccessScreen}
+        onContinue={handleSuccessContinue}
       />
     </div>
   );
