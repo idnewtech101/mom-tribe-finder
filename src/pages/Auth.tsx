@@ -12,6 +12,7 @@ import mascot from "@/assets/mascot.jpg";
 import logoNew from "@/assets/logo-new.jpg";
 import MomsterMascot from "@/components/MomsterMascot";
 import { useMascot } from "@/hooks/use-mascot";
+import PasswordInput from "@/components/PasswordInput";
 import { z } from "zod";
 
 const signUpSchema = z.object({
@@ -31,6 +32,7 @@ export default function Auth() {
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -38,6 +40,9 @@ export default function Auth() {
   const [forgotEmail, setForgotEmail] = useState("");
   const navigate = useNavigate();
   const { mascotConfig, visible, hideMascot, showWelcome } = useMascot();
+  
+  const passwordsMatch = password === confirmPassword;
+  const canRegister = !isLogin && acceptedTerms && acceptedAge && passwordsMatch && password.length >= 8;
 
   useEffect(() => {
     // Check if user is already logged in
@@ -80,6 +85,11 @@ export default function Auth() {
     
     if (!acceptedTerms) {
       toast.error("Πρέπει να αποδεχτείτε τους όρους χρήσης");
+      return;
+    }
+
+    if (!passwordsMatch) {
+      toast.error("Οι κωδικοί δεν ταιριάζουν");
       return;
     }
 
@@ -313,15 +323,34 @@ export default function Auth() {
           
           <div className="space-y-2">
             <Label htmlFor="password">Κωδικός</Label>
-            <Input 
+            <PasswordInput 
               id="password" 
-              type="password" 
               placeholder="••••••••" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              showStrengthMeter={!isLogin}
               required
             />
           </div>
+
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Επιβεβαίωση Κωδικού</Label>
+              <PasswordInput 
+                id="confirmPassword" 
+                placeholder="••••••••" 
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              {confirmPassword.length > 0 && !passwordsMatch && (
+                <p className="text-xs text-destructive">Οι κωδικοί δεν ταιριάζουν</p>
+              )}
+              {confirmPassword.length > 0 && passwordsMatch && (
+                <p className="text-xs text-green-600">Οι κωδικοί ταιριάζουν ✓</p>
+              )}
+            </div>
+          )}
 
           {!isLogin && (
             <div className="space-y-3 py-2">
@@ -363,7 +392,7 @@ export default function Auth() {
             type="submit" 
             className="w-full bg-nav-pink hover:bg-nav-pink/90 text-white" 
             size="lg" 
-            disabled={loading || (!isLogin && (!acceptedTerms || !acceptedAge))}
+            disabled={loading || (!isLogin && !canRegister)}
           >
             {loading ? "Παρακαλώ περιμένετε..." : (isLogin ? "Σύνδεση" : "Δημιουργία Λογαριασμού")}
           </Button>
