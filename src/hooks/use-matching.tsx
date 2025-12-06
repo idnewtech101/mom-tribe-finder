@@ -186,12 +186,47 @@ export function useMatching() {
       const likedYouUserIds = new Set((usersWhoLikedYou || []).map(s => s.from_user_id));
       console.log("Users who liked you:", likedYouUserIds.size);
 
+      // Get users that the current user has already swiped on (to exclude them)
+      const { data: alreadySwipedOn, error: swipesError } = await supabase
+        .from("swipes")
+        .select("to_user_id")
+        .eq("from_user_id", user.id);
+
+      if (swipesError) {
+        console.error("Error fetching already swiped profiles:", swipesError);
+      }
+
+      const alreadySwipedIds = new Set((alreadySwipedOn || []).map(s => s.to_user_id));
+      console.log("Already swiped on:", alreadySwipedIds.size);
+
+      // Get existing matches to avoid duplicate chats
+      const { data: existingMatches, error: matchesError } = await supabase
+        .from("matches")
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+
+      if (matchesError) {
+        console.error("Error fetching existing matches:", matchesError);
+      }
+
+      const matchedUserIds = new Set(
+        (existingMatches || []).flatMap(m => 
+          m.user1_id === user.id ? [m.user2_id] : [m.user1_id]
+        )
+      );
+      console.log("Already matched with:", matchedUserIds.size);
+
       console.log("Loaded profiles count:", allProfiles?.length || 0);
 
-      let profilesWithScores: ProfileMatch[] = (allProfiles || []).map(profile => ({
-        ...profile,
-        hasLikedYou: likedYouUserIds.has(profile.id)
-      }));
+      // Filter out already swiped and already matched users
+      let profilesWithScores: ProfileMatch[] = (allProfiles || [])
+        .filter(profile => !alreadySwipedIds.has(profile.id) && !matchedUserIds.has(profile.id))
+        .map(profile => ({
+          ...profile,
+          hasLikedYou: likedYouUserIds.has(profile.id)
+        }));
+
+      console.log("After filtering swiped/matched:", profilesWithScores.length);
 
       // Filter out profiles with empty interests or children arrays (but keep if they have photo)
       profilesWithScores = profilesWithScores.filter(profile => {
