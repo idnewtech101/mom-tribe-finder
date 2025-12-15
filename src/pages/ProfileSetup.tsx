@@ -119,11 +119,15 @@ export default function ProfileSetup() {
       setUserId(session.user.id);
 
       // Load existing profile data if any
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Failed to load profile during setup:', profileError);
+      }
 
       if (profile) {
         setUsername(profile.username || "");
@@ -304,9 +308,30 @@ export default function ProfileSetup() {
 
       console.log(`All ${photoUrls.length} photos uploaded, updating profile...`);
 
-      // Update profile
+      const { data: authUserData, error: authUserError } = await supabase.auth.getUser();
+      if (authUserError) {
+        console.error('Failed to fetch auth user during profile save:', authUserError);
+      }
+
+      const { data: existingProfile, error: existingProfileError } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (existingProfileError) {
+        console.error('Failed to fetch existing profile during upsert:', existingProfileError);
+      }
+
+      // Build profile payload
       const validData = validation.data;
       const profileData = {
+        full_name:
+          existingProfile?.full_name ??
+          authUserData.user?.user_metadata?.full_name ??
+          authUserData.user?.user_metadata?.name ??
+          '',
+        email: existingProfile?.email ?? authUserData.user?.email ?? '',
         username: validData.username,
         city: validData.city,
         area: validData.area,
@@ -318,30 +343,34 @@ export default function ProfileSetup() {
         profile_photos_urls: photoUrls,
         profile_completed: true,
         latitude: lat,
-        longitude: lng
+        longitude: lng,
       };
       
       console.log('Updating profile with data:', JSON.stringify(profileData, null, 2));
       
-      const { error: updateError, data: updateData } = await supabase
+      const { error: upsertError } = await supabase
         .from('profiles')
-        .update(profileData)
-        .eq('id', userId)
-        .select();
+        .upsert(
+          [
+            {
+              id: userId,
+              ...profileData,
+            },
+          ],
+          { onConflict: 'id' }
+        );
 
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        throw new Error(`Αποτυχία αποθήκευσης προφίλ: ${updateError.message}`);
+      if (upsertError) {
+        console.error('Profile upsert error:', upsertError);
+        throw new Error(`Αποτυχία αποθήκευσης προφίλ: ${upsertError.message}`);
       }
-
-      console.log('Profile updated successfully:', updateData);
 
       // Verify the update was successful
       const { data: verifyProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('profile_completed, username, city, area')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (verifyError || !verifyProfile?.profile_completed) {
         console.error('Profile verification failed:', verifyError, verifyProfile);

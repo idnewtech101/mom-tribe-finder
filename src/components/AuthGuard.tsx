@@ -56,11 +56,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     setCheckingProfile(true);
     
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('has_completed_onboarding, profile_completed')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Profile check error:', profileError);
+      }
 
       // Skip redirect logic if we're already on the target page
       const currentPath = location.pathname;
