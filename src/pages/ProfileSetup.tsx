@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Upload, X, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LocationPermissionDialog } from "@/components/LocationPermissionDialog";
+// Location permission is now only requested in Discover page
 import { INTERESTS } from "@/lib/interests";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ProfileSuccessScreen from "@/components/ProfileSuccessScreen";
@@ -35,15 +35,36 @@ const GREEK_CITIES = [
 ];
 
 const ATHENS_AREAS = [
-  'Κολωνάκι', 'Παγκράτι', 'Κηφισιά', 'Χαλάνδρι', 'Μαρούσι',
-  'Γλυφάδα', 'Βούλα', 'Βριλήσσια', 'Αμπελόκηποι', 'Ζωγράφου',
-  'Ψυχικό', 'Ηλιούπολη', 'Νέα Σμύρνη', 'Αιγάλεω', 'Περιστέρι'
+  // Κέντρο & Βόρεια Προάστια
+  'Κολωνάκι', 'Παγκράτι', 'Εξάρχεια', 'Κουκάκι', 'Πλάκα',
+  'Κηφισιά', 'Χαλάνδρι', 'Μαρούσι', 'Αγία Παρασκευή', 'Βριλήσσια',
+  'Ψυχικό', 'Φιλοθέη', 'Πεύκη', 'Μελίσσια', 'Νέα Ερυθραία',
+  'Πεντέλη', 'Εκάλη', 'Λυκόβρυση', 'Νέο Ηράκλειο', 'Μεταμόρφωση',
+  // Νότια Προάστια
+  'Γλυφάδα', 'Βούλα', 'Βουλιαγμένη', 'Βάρη', 'Ηλιούπολη',
+  'Αργυρούπολη', 'Άλιμος', 'Παλαιό Φάληρο', 'Νέα Σμύρνη', 'Καλλιθέα',
+  // Κέντρο & Δυτικά
+  'Αμπελόκηποι', 'Ζωγράφου', 'Γαλάτσι', 'Κυψέλη', 'Πατήσια',
+  'Περιστέρι', 'Αιγάλεω', 'Χαϊδάρι', 'Πετρούπολη', 'Ίλιον',
+  'Νέα Φιλαδέλφεια', 'Νέα Χαλκηδόνα', 'Νέα Ιωνία', 'Κερατσίνι',
+  // Ανατολικά
+  'Παιανία', 'Γέρακας', 'Γλυκά Νερά', 'Παλλήνη', 'Σπάτα',
+  'Άλλη'
 ];
 
 const THESSALONIKI_AREAS = [
-  'Καλαμαριά', 'Πανόραμα', 'Τούμπα', 'Τριανδρία', 'Εύοσμος',
-  'Κέντρο', 'Νέα Παραλία', 'Χαριλάου', 'Πυλαία', 'Θέρμη',
-  'Καραμπουρνάκι', 'Νεάπολη', 'Αμπελόκηποι', 'Συκιές'
+  // Κέντρο & Ανατολικά
+  'Κέντρο', 'Νέα Παραλία', 'Λαδάδικα', 'Άνω Πόλη', 'Ροτόντα',
+  'Καλαμαριά', 'Χαριλάου', 'Τούμπα', 'Τριανδρία', 'Ντεπώ',
+  'Πυλαία', 'Θέρμη', 'Πανόραμα', 'Φοίνικας', 'Καραμπουρνάκι',
+  // Δυτικά
+  'Εύοσμος', 'Κορδελιό', 'Αμπελόκηποι', 'Μενεμένη', 'Σταυρούπολη',
+  'Πολίχνη', 'Νεάπολη', 'Συκιές', 'Ελευθέριο-Κορδελιό',
+  // Ανατολικά / Περίχωρα
+  'Καλαμαρία-Αρετσού', 'Κρήνη', 'Νέα Κρήνη', 'Περαία', 'Νέοι Επιβάτες',
+  'Μηχανιώνα', 'Ωραιόκαστρο', 'Ευκαρπία', 'Σίνδος', 'Διαβατά',
+  // Άλλες
+  'Αγία Τριάδα', 'Νέα Μηχανιώνα', 'Επανομή', 'Χαλκηδόνα', 'Άλλη'
 ];
 
 const CHILD_AGE_GROUPS = [
@@ -83,9 +104,8 @@ export default function ProfileSetup() {
   const [matchPreference, setMatchPreference] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [showLocationDialog, setShowLocationDialog] = useState(false);
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  // Location coordinates are no longer collected during profile setup
+  // They will be requested in Discover page
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
@@ -198,35 +218,11 @@ export default function ProfileSetup() {
       return;
     }
 
-    // Request location permission before final submission
-    setShowLocationDialog(true);
+    // Submit profile directly without location - location will be requested in Discover
+    await submitProfile(null, null);
   };
 
-  const handleLocationAllow = () => {
-    setShowLocationDialog(false);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLatitude(position.coords.latitude);
-          setLongitude(position.coords.longitude);
-          submitProfile(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-          toast.error("Δεν μπορέσαμε να λάβουμε την τοποθεσία σας");
-          submitProfile(null, null);
-        }
-      );
-    } else {
-      toast.error("Ο browser σας δεν υποστηρίζει geolocation");
-      submitProfile(null, null);
-    }
-  };
-
-  const handleLocationDeny = () => {
-    setShowLocationDialog(false);
-    submitProfile(null, null);
-  };
+  // Location handlers removed - location is now requested only in Discover page
 
   const submitProfile = async (lat: number | null, lng: number | null) => {
     if (!userId) return;
@@ -614,11 +610,7 @@ export default function ProfileSetup() {
         </form>
       </Card>
 
-      <LocationPermissionDialog 
-        open={showLocationDialog}
-        onAllow={handleLocationAllow}
-        onDeny={handleLocationDeny}
-      />
+      {/* Location permission is now requested in Discover page */}
 
       {/* Profile Success Screen */}
       <ProfileSuccessScreen 
