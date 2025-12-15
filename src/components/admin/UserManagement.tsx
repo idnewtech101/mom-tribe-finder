@@ -71,7 +71,18 @@ export default function UserManagement() {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [deleteProfile, setDeleteProfile] = useState<Profile | null>(null);
   const [saving, setSaving] = useState(false);
+  
+  // Filters
+  const [filterVerified, setFilterVerified] = useState<string>("all");
+  const [filterBlocked, setFilterBlocked] = useState<string>("all");
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterDateFrom, setFilterDateFrom] = useState<string>("");
+  const [filterDateTo, setFilterDateTo] = useState<string>("");
+  
   const { toast } = useToast();
+
+  // Get unique cities for filter
+  const uniqueCities = [...new Set(profiles.map(p => p.city).filter(Boolean))].sort();
 
   useEffect(() => {
     fetchProfiles();
@@ -79,7 +90,7 @@ export default function UserManagement() {
 
   useEffect(() => {
     filterProfiles();
-  }, [searchTerm, profiles]);
+  }, [searchTerm, profiles, filterVerified, filterBlocked, filterCity, filterDateFrom, filterDateTo]);
 
   const fetchProfiles = async () => {
     try {
@@ -104,20 +115,51 @@ export default function UserManagement() {
   };
 
   const filterProfiles = () => {
-    if (!searchTerm.trim()) {
-      setFilteredProfiles(profiles);
-      return;
+    let filtered = [...profiles];
+
+    // Search term filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (profile) =>
+          profile.full_name?.toLowerCase().includes(term) ||
+          profile.email?.toLowerCase().includes(term) ||
+          profile.city?.toLowerCase().includes(term) ||
+          profile.area?.toLowerCase().includes(term) ||
+          profile.username?.toLowerCase().includes(term)
+      );
     }
 
-    const term = searchTerm.toLowerCase();
-    const filtered = profiles.filter(
-      (profile) =>
-        profile.full_name?.toLowerCase().includes(term) ||
-        profile.email?.toLowerCase().includes(term) ||
-        profile.city?.toLowerCase().includes(term) ||
-        profile.area?.toLowerCase().includes(term) ||
-        profile.username?.toLowerCase().includes(term)
-    );
+    // Verified filter
+    if (filterVerified === "verified") {
+      filtered = filtered.filter(p => p.verified_status === true);
+    } else if (filterVerified === "unverified") {
+      filtered = filtered.filter(p => p.verified_status !== true);
+    }
+
+    // Blocked filter
+    if (filterBlocked === "blocked") {
+      filtered = filtered.filter(p => p.is_blocked === true);
+    } else if (filterBlocked === "active") {
+      filtered = filtered.filter(p => p.is_blocked !== true);
+    }
+
+    // City filter
+    if (filterCity !== "all") {
+      filtered = filtered.filter(p => p.city === filterCity);
+    }
+
+    // Date range filter
+    if (filterDateFrom) {
+      const fromDate = new Date(filterDateFrom);
+      filtered = filtered.filter(p => new Date(p.created_at) >= fromDate);
+    }
+    if (filterDateTo) {
+      const toDate = new Date(filterDateTo);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(p => new Date(p.created_at) <= toDate);
+    }
+
     setFilteredProfiles(filtered);
   };
 
@@ -250,8 +292,20 @@ export default function UserManagement() {
     return <div className="text-center py-8">Φόρτωση...</div>;
   }
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterVerified("all");
+    setFilterBlocked("all");
+    setFilterCity("all");
+    setFilterDateFrom("");
+    setFilterDateTo("");
+  };
+
+  const hasActiveFilters = searchTerm || filterVerified !== "all" || filterBlocked !== "all" || filterCity !== "all" || filterDateFrom || filterDateTo;
+
   return (
     <div className="space-y-6">
+      {/* Search Bar */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -266,6 +320,86 @@ export default function UserManagement() {
           {filteredProfiles.length} χρήστες
         </Badge>
       </div>
+
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Verified</Label>
+            <Select value={filterVerified} onValueChange={setFilterVerified}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Όλοι</SelectItem>
+                <SelectItem value="verified">Verified ✓</SelectItem>
+                <SelectItem value="unverified">Μη Verified</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Κατάσταση</Label>
+            <Select value={filterBlocked} onValueChange={setFilterBlocked}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Όλοι</SelectItem>
+                <SelectItem value="active">Ενεργοί</SelectItem>
+                <SelectItem value="blocked">Blocked</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Πόλη</Label>
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Όλες</SelectItem>
+                {uniqueCities.map(city => (
+                  <SelectItem key={city} value={city}>{city}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Από</Label>
+            <Input
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              className="h-9"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Έως</Label>
+            <Input
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearFilters}
+            className="mt-3 text-muted-foreground"
+          >
+            <X className="w-4 h-4 mr-1" />
+            Καθαρισμός φίλτρων
+          </Button>
+        )}
+      </Card>
 
       <div className="grid gap-4">
         {filteredProfiles.map((profile) => (

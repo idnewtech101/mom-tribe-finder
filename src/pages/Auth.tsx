@@ -45,7 +45,7 @@ export default function Auth() {
   const canRegister = !isLogin && acceptedTerms && acceptedAge && passwordsMatch && password.length >= 8;
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in - redirect without popup
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -63,6 +63,7 @@ export default function Auth() {
           return;
         }
 
+        // Returning user - redirect directly without welcome popup
         if (!profile?.profile_completed) {
           navigate("/profile-setup");
         } else if (!profile?.has_completed_onboarding) {
@@ -182,6 +183,7 @@ export default function Auth() {
           return;
         }
 
+        // Only show welcome for users who haven't completed profile or onboarding
         if (!profile?.profile_completed) {
           showWelcome();
           setTimeout(() => navigate("/profile-setup"), 2000);
@@ -189,8 +191,8 @@ export default function Auth() {
           showWelcome();
           setTimeout(() => navigate("/onboarding"), 2000);
         } else {
-          showWelcome();
-          setTimeout(() => navigate("/discover"), 2000);
+          // Returning user - go directly to discover without popup
+          navigate("/discover");
         }
       }
     } catch (error: any) {
