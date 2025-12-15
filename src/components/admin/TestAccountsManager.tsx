@@ -39,6 +39,34 @@ export function TestAccountsManager() {
     }
   };
 
+  const handleCreateReviewAccount = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-review-account', {
+        body: {}
+      });
+      if (error) throw error;
+
+      setCreatedAccounts([
+        {
+          id: data.userId,
+          name: 'Test Reviewer',
+          email: data.email,
+          password: data.password,
+          city: 'Αθήνα',
+          area: 'Κολωνάκι'
+        }
+      ]);
+
+      toast.success(data.message || 'Έτοιμο το review account!');
+    } catch (error: any) {
+      console.error('Error creating review account:', error);
+      toast.error(error.message || 'Σφάλμα κατά τη δημιουργία review account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-6">
@@ -67,38 +95,56 @@ export function TestAccountsManager() {
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="count">Αριθμός Accounts (1-50)</Label>
-            <Input
-              id="count"
-              type="number"
-              min={1}
-              max={50}
-              value={count}
-              onChange={(e) => setCount(parseInt(e.target.value) || 10)}
-              disabled={loading}
-            />
-          </div>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="count">Αριθμός Accounts (1-50)</Label>
+              <Input
+                id="count"
+                type="number"
+                min={1}
+                max={50}
+                value={count}
+                onChange={(e) => setCount(parseInt(e.target.value) || 10)}
+                disabled={loading}
+              />
+            </div>
 
-          <Button
-            onClick={handleCreateTestAccounts}
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Δημιουργία...
-              </>
-            ) : (
-              <>
-                <Users className="w-4 h-4 mr-2" />
-                Δημιούργησε {count} Test Accounts
-              </>
-            )}
-          </Button>
-        </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Button
+                onClick={handleCreateTestAccounts}
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Δημιουργία...
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-4 h-4 mr-2" />
+                    Δημιούργησε {count} Test Accounts
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleCreateReviewAccount}
+                disabled={loading}
+                variant="secondary"
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Δημιουργία...
+                  </>
+                ) : (
+                  <>Google Review Account</>
+                )}
+              </Button>
+            </div>
+          </div>
 
         {createdAccounts.length > 0 && (
           <div className="space-y-3">
