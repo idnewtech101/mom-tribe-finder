@@ -348,21 +348,14 @@ export default function ProfileSetup() {
       
       console.log('Updating profile with data:', JSON.stringify(profileData, null, 2));
       
-      const { error: upsertError } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
-        .upsert(
-          [
-            {
-              id: userId,
-              ...profileData,
-            },
-          ],
-          { onConflict: 'id' }
-        );
+        .update(profileData)
+        .eq('id', userId);
 
-      if (upsertError) {
-        console.error('Profile upsert error:', upsertError);
-        throw new Error(`Αποτυχία αποθήκευσης προφίλ: ${upsertError.message}`);
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        throw new Error(`Αποτυχία αποθήκευσης προφίλ: ${updateError.message}`);
       }
 
       // Verify the update was successful
