@@ -348,29 +348,24 @@ export default function ProfileSetup() {
       
       console.log('Updating profile with data:', JSON.stringify(profileData, null, 2));
       
-      const { error: updateError } = await supabase
+      const { data: updatedRow, error: updateError } = await supabase
         .from('profiles')
         .update(profileData)
-        .eq('id', userId);
+        .eq('id', userId)
+        .select('id, profile_completed, username, city, area')
+        .maybeSingle();
 
       if (updateError) {
         console.error('Profile update error:', updateError);
         throw new Error(`Αποτυχία αποθήκευσης προφίλ: ${updateError.message}`);
       }
 
-      // Verify the update was successful
-      const { data: verifyProfile, error: verifyError } = await supabase
-        .from('profiles')
-        .select('profile_completed, username, city, area')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (verifyError || !verifyProfile?.profile_completed) {
-        console.error('Profile verification failed:', verifyError, verifyProfile);
+      if (!updatedRow?.profile_completed) {
+        console.error('Profile update did not mark as completed:', updatedRow);
         throw new Error("Η αποθήκευση του προφίλ δεν επιβεβαιώθηκε");
       }
 
-      console.log('Profile verified:', verifyProfile);
+      console.log('Profile saved + verified:', updatedRow);
 
       // Check if onboarding has been completed
       const { data: updatedProfile } = await supabase
