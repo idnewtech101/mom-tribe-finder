@@ -175,40 +175,40 @@ export default function DailyBoost() {
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    fetchProfile();
+    fetchProfileAndShowWelcome();
   }, []);
 
-  // Show welcome popup only once - on first ever visit
-  useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('momster_home_welcome_shown');
-    
-    if (!hasSeenWelcome) {
-      // Mark as shown immediately to prevent any race conditions
-      localStorage.setItem('momster_home_welcome_shown', 'true');
-      
-      showMascot({
-        state: "happy",
-        message: language === 'el' 
-          ? "Καλώς ήρθες στο Momster! 🌸\nΗ τέλεια κοινότητα για μαμάδες σαν κι εσένα.\nΠάμε να βρούμε το επόμενο match σου; ✨" 
-          : "Welcome to Momster! 🌸\nThe perfect community for moms like you.\nLet's find your next match! ✨",
-        duration: 4000,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfileAndShowWelcome = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
         .from("profiles")
-        .select("username, full_name")
+        .select("username, full_name, welcome_popup_shown")
         .eq("id", user.id)
         .single();
 
-      if (data) setProfile(data);
+      if (data) {
+        setProfile(data);
+        
+        // Show welcome popup only once - tied to user account, not device
+        if (!data.welcome_popup_shown) {
+          // Mark as shown in database
+          await supabase
+            .from("profiles")
+            .update({ welcome_popup_shown: true })
+            .eq("id", user.id);
+          
+          showMascot({
+            state: "happy",
+            message: language === 'el' 
+              ? "Καλώς ήρθες στο Momster! 🌸\nΗ τέλεια κοινότητα για μαμάδες σαν κι εσένα.\nΠάμε να βρούμε το επόμενο match σου; ✨" 
+              : "Welcome to Momster! 🌸\nThe perfect community for moms like you.\nLet's find your next match! ✨",
+            duration: 4000,
+          });
+        }
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }

@@ -58,12 +58,20 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('has_completed_onboarding, profile_completed')
+        .select('has_completed_onboarding, profile_completed, first_login_date')
         .eq('id', userId)
         .maybeSingle();
 
       if (profileError) {
         console.error('Profile check error:', profileError);
+      }
+
+      // Set first_login_date if not already set (first time login)
+      if (profile && !profile.first_login_date) {
+        await supabase
+          .from('profiles')
+          .update({ first_login_date: new Date().toISOString() })
+          .eq('id', userId);
       }
 
       // Skip redirect logic if we're already on the target page

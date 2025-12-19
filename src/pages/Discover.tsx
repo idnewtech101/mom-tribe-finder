@@ -86,10 +86,14 @@ export default function Discover() {
             setLikesYouCount(count);
           }
 
-          // Check if location dialog has been shown before (one-time only)
-          const locationDialogShown = localStorage.getItem('location_permission_shown');
+          // Check if location dialog has been shown before (tied to user account)
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("location_popup_shown")
+            .eq("id", user.id)
+            .single();
           
-          if (!locationDialogShown) {
+          if (profileData && !profileData.location_popup_shown) {
             // First time - show location dialog
             setShowLocationDialog(true);
           }
@@ -103,13 +107,27 @@ export default function Discover() {
 
   // Handle location permission - using profile area only (no GPS)
   const handleAllowLocation = async () => {
-    localStorage.setItem('location_permission_shown', 'true');
+    // Mark as shown in database (tied to user account)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ location_popup_shown: true })
+        .eq("id", user.id);
+    }
     setShowLocationDialog(false);
     // No GPS - just use profile area for matching
   };
 
-  const handleDenyLocation = () => {
-    localStorage.setItem('location_permission_shown', 'true');
+  const handleDenyLocation = async () => {
+    // Mark as shown in database (tied to user account)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ location_popup_shown: true })
+        .eq("id", user.id);
+    }
     setShowLocationDialog(false);
     setLocationDenied(true);
   };

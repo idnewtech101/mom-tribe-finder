@@ -534,6 +534,7 @@ export type Database = {
           date_of_birth: string | null
           distance_preference_km: number | null
           email: string
+          first_login_date: string | null
           full_name: string
           has_completed_onboarding: boolean | null
           id: string
@@ -541,6 +542,7 @@ export type Database = {
           interests_threshold: number | null
           is_blocked: boolean | null
           latitude: number | null
+          location_popup_shown: boolean | null
           longitude: number | null
           marital_status: string | null
           match_age_filter: boolean | null
@@ -558,6 +560,7 @@ export type Database = {
           updated_at: string | null
           username: string | null
           verified_status: boolean | null
+          welcome_popup_shown: boolean | null
         }
         Insert: {
           age_range_months?: number | null
@@ -573,6 +576,7 @@ export type Database = {
           date_of_birth?: string | null
           distance_preference_km?: number | null
           email: string
+          first_login_date?: string | null
           full_name: string
           has_completed_onboarding?: boolean | null
           id: string
@@ -580,6 +584,7 @@ export type Database = {
           interests_threshold?: number | null
           is_blocked?: boolean | null
           latitude?: number | null
+          location_popup_shown?: boolean | null
           longitude?: number | null
           marital_status?: string | null
           match_age_filter?: boolean | null
@@ -597,6 +602,7 @@ export type Database = {
           updated_at?: string | null
           username?: string | null
           verified_status?: boolean | null
+          welcome_popup_shown?: boolean | null
         }
         Update: {
           age_range_months?: number | null
@@ -612,6 +618,7 @@ export type Database = {
           date_of_birth?: string | null
           distance_preference_km?: number | null
           email?: string
+          first_login_date?: string | null
           full_name?: string
           has_completed_onboarding?: boolean | null
           id?: string
@@ -619,6 +626,7 @@ export type Database = {
           interests_threshold?: number | null
           is_blocked?: boolean | null
           latitude?: number | null
+          location_popup_shown?: boolean | null
           longitude?: number | null
           marital_status?: string | null
           match_age_filter?: boolean | null
@@ -636,6 +644,7 @@ export type Database = {
           updated_at?: string | null
           username?: string | null
           verified_status?: boolean | null
+          welcome_popup_shown?: boolean | null
         }
         Relationships: []
       }
