@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { MapPin, Baby, Heart, Save } from "lucide-react";
+import { MapPin, Baby, Heart, Save, ArrowLeft, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import mascot from "@/assets/mascot.jpg";
@@ -27,11 +27,17 @@ export default function MatchingFilters() {
     loadFilters();
   }, []);
 
+  const handleGoBack = () => {
+    navigate("/discover");
+  };
+
   const loadFilters = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth");
+        // Instead of redirecting to auth, just go back to discover
+        // The AuthGuard will handle authentication if needed
+        navigate("/discover");
         return;
       }
 
@@ -99,6 +105,30 @@ export default function MatchingFilters() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
+      {/* Header with Back and Close buttons */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+            aria-label="Πίσω"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Πίσω</span>
+          </button>
+          <h1 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Φίλτρα
+          </h1>
+          <button
+            onClick={handleGoBack}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
+            aria-label="Κλείσιμο"
+          >
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+
       <img 
         src={mascot} 
         alt="Momster Mascot" 
@@ -106,10 +136,6 @@ export default function MatchingFilters() {
       />
       
       <div className="max-w-md mx-auto pt-20 pb-24">
-        <h1 className="text-2xl font-bold text-center mb-6 text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
-          Φίλτρα Matching
-        </h1>
-
         <div className="space-y-4">
           {/* Location Filter */}
           <Card className="p-6">
