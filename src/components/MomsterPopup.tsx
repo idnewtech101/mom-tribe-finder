@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
 
 interface MomsterPopupProps {
@@ -8,6 +9,7 @@ interface MomsterPopupProps {
   buttonText: string;
   onButtonClick: () => void;
   visible: boolean;
+  onClose?: () => void;
 }
 
 export default function MomsterPopup({
@@ -17,8 +19,17 @@ export default function MomsterPopup({
   buttonText,
   onButtonClick,
   visible,
+  onClose,
 }: MomsterPopupProps) {
   if (!visible) return null;
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      onButtonClick();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
@@ -30,6 +41,15 @@ export default function MomsterPopup({
           boxShadow: "0 10px 40px rgba(192, 107, 142, 0.15), 0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
+        {/* X Close Button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+          aria-label="Κλείσιμο"
+        >
+          <X className="w-5 h-5 text-gray-600" />
+        </button>
+
         {/* Mascot top right */}
         <img
           src={mascot}
