@@ -521,6 +521,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age_migration_done: boolean | null
           age_range_months: number | null
           area: string
           avatar_data: Json | null
@@ -563,6 +564,7 @@ export type Database = {
           welcome_popup_shown: boolean | null
         }
         Insert: {
+          age_migration_done?: boolean | null
           age_range_months?: number | null
           area: string
           avatar_data?: Json | null
@@ -605,6 +607,7 @@ export type Database = {
           welcome_popup_shown?: boolean | null
         }
         Update: {
+          age_migration_done?: boolean | null
           age_range_months?: number | null
           area?: string
           avatar_data?: Json | null

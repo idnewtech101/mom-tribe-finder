@@ -94,24 +94,36 @@ export default function Discover() {
           // Check if location dialog has been shown before (tied to user account)
           const { data: profileData } = await supabase
             .from("profiles")
-            .select("location_popup_shown, children, age_migration_done")
+            .select("location_popup_shown, children")
             .eq("id", user.id)
             .single();
           
-          if (profileData && !profileData.location_popup_shown) {
+          // Type assertion for new column that may not be in generated types yet
+          const profileDataAny = profileData as any;
+          
+          if (profileDataAny && !profileDataAny.location_popup_shown) {
             // First time - show location dialog
             setShowLocationDialog(true);
           }
 
           // Check if age migration is needed
-          if (profileData && !profileData.age_migration_done) {
-            const children = profileData.children as Array<{ name?: string; ageGroup: string; gender?: 'boy' | 'girl' | 'baby' }> | null;
+          if (profileDataAny) {
+            const children = profileDataAny.children as Array<{ name?: string; ageGroup: string; gender?: 'boy' | 'girl' | 'baby' }> | null;
             if (children && Array.isArray(children) && children.length > 0) {
               // Check if any child has old age format
               const needsMigration = children.some(child => needsAgeMigration(child.ageGroup));
               if (needsMigration) {
-                setCurrentChildren(children);
-                setShowAgeMigration(true);
+                // Check if migration already done (use separate query to avoid type issues)
+                const { data: migrationStatus } = await supabase
+                  .from("profiles")
+                  .select("age_migration_done")
+                  .eq("id", user.id)
+                  .single() as { data: { age_migration_done?: boolean } | null };
+                
+                if (!migrationStatus?.age_migration_done) {
+                  setCurrentChildren(children);
+                  setShowAgeMigration(true);
+                }
               }
             }
           }
@@ -148,6 +160,31 @@ export default function Discover() {
     }
     setShowLocationDialog(false);
     setLocationDenied(true);
+  };
+
+  // Handle age migration save
+  const handleSaveAgeMigration = async (children: Array<{ name?: string; ageGroup: string; gender?: 'boy' | 'girl' | 'baby' }>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          children: children,
+          child_age_group: children[0]?.ageGroup || '',
+          age_migration_done: true
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast.success("Ευχαριστούμε! Οι ηλικίες αποθηκεύτηκαν 🤍");
+      reloadProfiles(); // Refresh matching with new ages
+    } catch (error) {
+      console.error("Error saving age migration:", error);
+      toast.error("Σφάλμα κατά την αποθήκευση");
+    }
   };
 
   // Check if tutorial has been shown before
@@ -777,6 +814,14 @@ export default function Discover() {
           setShowDailyMascot(false);
           localStorage.setItem('daily_mascot_shown', new Date().toDateString());
         }}
+      />
+
+      {/* Age Migration Popup */}
+      <AgeMigrationPopup
+        open={showAgeMigration}
+        onClose={() => setShowAgeMigration(false)}
+        currentChildren={currentChildren}
+        onSave={handleSaveAgeMigration}
       />
     </div>
   );
