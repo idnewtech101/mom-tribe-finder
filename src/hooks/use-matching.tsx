@@ -377,21 +377,27 @@ export function useMatching() {
         return { ...profile, matchPercentage };
       });
 
-      // SORT: 1) Users who liked you first! 2) Common interests, 3) Distance, 4) Kids ages
+      // SORT: 1) Users who liked you first! 2) Very close age match (±12 months), 3) Common interests, 4) Distance
       profilesWithMatchPercentage.sort((a, b) => {
         // FIRST PRIORITY: Users who liked you appear at the top!
         if (a.hasLikedYou && !b.hasLikedYou) return -1;
         if (!a.hasLikedYou && b.hasLikedYou) return 1;
         
-        // Second: common interests (highest first)
+        // SECOND PRIORITY: Very close child age (within 12 months)
+        const aCloseAge = (a as any).ageDiffMonths <= 12;
+        const bCloseAge = (b as any).ageDiffMonths <= 12;
+        if (aCloseAge && !bCloseAge) return -1;
+        if (!aCloseAge && bCloseAge) return 1;
+        
+        // Third: common interests (highest first)
         const interestsDiff = (b.commonInterestsCount || 0) - (a.commonInterestsCount || 0);
         if (interestsDiff !== 0) return interestsDiff;
         
-        // Third: distance (closest first)
+        // Fourth: distance (closest first)
         const distanceDiff = (a.distance || 9999) - (b.distance || 9999);
         if (distanceDiff !== 0) return distanceDiff;
         
-        // Fourth: kids age match score (highest first)
+        // Fifth: kids age match score (highest first)
         return (b.ageMatchScore || 0) - (a.ageMatchScore || 0);
       });
 
