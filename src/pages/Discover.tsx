@@ -101,8 +101,8 @@ export default function Discover() {
           // Type assertion for new column that may not be in generated types yet
           const profileDataAny = profileData as any;
           
-          if (profileDataAny && !profileDataAny.location_popup_shown) {
-            // First time - show location dialog
+          if (profileDataAny && profileDataAny.location_popup_shown === false) {
+            // First time - show location dialog (only if explicitly false, not null/undefined)
             setShowLocationDialog(true);
           }
 
@@ -137,26 +137,34 @@ export default function Discover() {
 
   // Handle location permission - using profile area only (no GPS)
   const handleAllowLocation = async () => {
-    // Mark as shown in database (tied to user account)
+    // Mark as shown in database FIRST (tied to user account)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({ location_popup_shown: true })
         .eq("id", user.id);
+      
+      if (error) {
+        console.error("Failed to update location_popup_shown:", error);
+      }
     }
     setShowLocationDialog(false);
     // No GPS - just use profile area for matching
   };
 
   const handleDenyLocation = async () => {
-    // Mark as shown in database (tied to user account)
+    // Mark as shown in database FIRST (tied to user account)
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({ location_popup_shown: true })
         .eq("id", user.id);
+      
+      if (error) {
+        console.error("Failed to update location_popup_shown:", error);
+      }
     }
     setShowLocationDialog(false);
     setLocationDenied(true);
@@ -392,6 +400,37 @@ export default function Discover() {
     return `${count} ${count === 1 ? 'παιδί' : 'παιδιά'} (${ages})`;
   };
 
+  // Check if current profile has similar age children to current user
+  const hasSimilarAgeChildren = () => {
+    if (!currentUser?.children || !currentProfile?.children) return false;
+    
+    const getAgeMonths = (ageGroup: string): number => {
+      // Map age groups to approximate months
+      const ageMap: { [key: string]: number } = {
+        'pregnant': 0, '0-3m': 2, '3-6m': 5, '6-9m': 8, '9-12m': 11,
+        '1y': 12, '2y': 24, '3y': 36, '4y': 48, '5y': 60, '6y': 72,
+        '7y': 84, '8y': 96, '9y': 108, '10y': 120, '11y': 132, '12y': 144,
+        '13y': 156, '14y': 168, '15y': 180, '16y': 192, '17y': 204
+      };
+      return ageMap[ageGroup] || 24;
+    };
+
+    const userChildren = currentUser.children as any[];
+    const profileChildren = currentProfile.children as any[];
+    
+    for (const userChild of userChildren) {
+      const userAge = getAgeMonths(userChild.ageGroup || userChild.age);
+      for (const profileChild of profileChildren) {
+        const profileAge = getAgeMonths(profileChild.ageGroup || profileChild.age);
+        // Within 12 months = similar age
+        if (Math.abs(userAge - profileAge) <= 12) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   // Collect all profile photos
   const profilePhotos = (() => {
     const photos: string[] = [];
@@ -581,6 +620,15 @@ export default function Discover() {
                   <Badge variant="secondary" className="bg-primary/20 text-primary font-bold">
                     {currentProfile.commonInterestsCount}/{currentProfile.totalInterests || currentProfile.interests?.length || 0}
                   </Badge>
+                </div>
+              )}
+
+              {/* Similar Age Badge */}
+              {hasSimilarAgeChildren() && (
+                <div className="flex items-center justify-center bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg border border-purple-200 shadow-sm">
+                  <span className="text-sm font-semibold text-purple-700">
+                    Στο ίδιο στάδιο με εσένα ✨
+                  </span>
                 </div>
               )}
 

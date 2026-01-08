@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, Trash2, ZoomIn, Clock } from "lucide-react";
+import { Camera, Trash2, ZoomIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PhotoRulesPopup } from "./PhotoRulesPopup";
@@ -66,13 +66,10 @@ export function PhotoUploadWithDelete({ photos, onPhotosUpdated }: PhotoUploadWi
   const [zoomedPhoto, setZoomedPhoto] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showRulesPopup, setShowRulesPopup] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [photoRulesSeen, setPhotoRulesSeen] = useState(false);
-  const [pendingPhotos, setPendingPhotos] = useState<string[]>([]);
 
   useEffect(() => {
     checkPhotoRulesSeen();
-    loadPendingPhotos();
   }, []);
 
   const checkPhotoRulesSeen = async () => {
@@ -85,21 +82,6 @@ export function PhotoUploadWithDelete({ photos, onPhotosUpdated }: PhotoUploadWi
         .single();
       
       setPhotoRulesSeen(profile?.photo_rules_seen || false);
-    }
-  };
-
-  const loadPendingPhotos = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: pending } = await supabase
-        .from('photo_moderation_queue')
-        .select('photo_url')
-        .eq('user_id', user.id)
-        .is('manual_status', null);
-      
-      if (pending) {
-        setPendingPhotos(pending.map(p => p.photo_url));
-      }
     }
   };
 
@@ -174,24 +156,30 @@ export function PhotoUploadWithDelete({ photos, onPhotosUpdated }: PhotoUploadWi
         .from('profile-photos')
         .getPublicUrl(filePath);
 
-      // Add to moderation queue (NOT to profile yet)
-      const { error: queueError } = await supabase
-        .from('photo_moderation_queue')
-        .insert({
-          user_id: user.id,
-          photo_url: publicUrl,
-          photo_type: 'profile',
-          ai_status: 'pending',
-          manual_status: null
-        });
+      // Get existing photos and add new one directly (no moderation queue)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('profile_photos_urls')
+        .eq('id', user.id)
+        .single();
 
-      if (queueError) throw queueError;
+      if (profileError) throw profileError;
 
-      toast.success("Η φωτογραφία ανέβηκε! 📸 Θα ελεγχθεί σύντομα.", {
-        description: "Οι φωτογραφίες ελέγχονται αυτόματα για να κρατήσουμε την κοινότητά μας ασφαλή."
-      });
-      
-      setPendingPhotos(prev => [...prev, publicUrl]);
+      const existingPhotos = profileData?.profile_photos_urls || [];
+      const updatedPhotos = [...existingPhotos, publicUrl];
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          profile_photos_urls: updatedPhotos,
+          profile_photo_url: updatedPhotos[0] || publicUrl
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast.success("Η φωτογραφία ανέβηκε! 📸");
+      onPhotosUpdated();
       event.target.value = '';
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -254,16 +242,6 @@ export function PhotoUploadWithDelete({ photos, onPhotosUpdated }: PhotoUploadWi
       <Card className="p-6 bg-gradient-to-br from-[#F8E9EE] to-[#F5E8F0] border-[#F3DCE5]">
         <h3 className="text-lg font-bold text-foreground mb-4">📸 Φωτογραφίες</h3>
         
-        {/* Pending photos notice */}
-        {pendingPhotos.length > 0 && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm">
-            <div className="flex items-center gap-2 text-yellow-700">
-              <Clock className="w-4 h-4" />
-              <span>{pendingPhotos.length} φωτογραφ{pendingPhotos.length === 1 ? 'ία' : 'ίες'} σε αναμονή έγκρισης</span>
-            </div>
-          </div>
-        )}
-        
         <div className="grid grid-cols-3 gap-4 mb-4">
           {photos.map((photo, index) => (
             <div key={index} className="relative group">
@@ -293,24 +271,7 @@ export function PhotoUploadWithDelete({ photos, onPhotosUpdated }: PhotoUploadWi
             </div>
           ))}
           
-          {/* Pending photos preview (grayed out) */}
-          {pendingPhotos.map((photo, index) => (
-            <div key={`pending-${index}`} className="relative">
-              <img
-                src={photo}
-                alt={`Pending ${index + 1}`}
-                className="w-full aspect-square object-cover rounded-[25px] border-2 border-dashed border-yellow-300 opacity-60 grayscale"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-[25px]">
-                <div className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Pending
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {photos.length + pendingPhotos.length < 6 && (
+          {photos.length < 6 && (
             <label className="w-full aspect-square rounded-[25px] border-2 border-dashed border-[#F3DCE5] flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-[#FDF7F9] transition-all">
               <input
                 id="photo-upload-input"
@@ -337,10 +298,7 @@ export function PhotoUploadWithDelete({ photos, onPhotosUpdated }: PhotoUploadWi
         </div>
         
         <p className="text-xs text-muted-foreground text-center">
-          Πάτα για zoom • {photos.length}/6 εγκεκριμένες φωτογραφίες
-        </p>
-        <p className="text-[10px] text-muted-foreground text-center mt-1">
-          Οι φωτογραφίες ελέγχονται αυτόματα για να κρατήσουμε την κοινότητά μας ασφαλή.
+          Πάτα για zoom • {photos.length}/6 φωτογραφίες
         </p>
       </Card>
 
