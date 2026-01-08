@@ -194,11 +194,16 @@ export default function DailyBoost() {
         
         // Show welcome popup only once - tied to user account, not device
         if (!data.welcome_popup_shown) {
-          // Mark as shown in database
-          await supabase
+          // Mark as shown in database FIRST to prevent repeat showing
+          const { error: updateError } = await supabase
             .from("profiles")
             .update({ welcome_popup_shown: true })
             .eq("id", user.id);
+          
+          if (updateError) {
+            console.error("Failed to update welcome_popup_shown:", updateError);
+            return; // Don't show popup if we can't mark it as shown
+          }
           
           showMascot({
             state: "happy",

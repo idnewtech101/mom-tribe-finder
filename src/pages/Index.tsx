@@ -114,7 +114,7 @@ const Index = () => {
           {/* Community Indicator */}
           {getCommunityText() && (
             <div className="mb-8 flex justify-center">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/60 backdrop-blur-sm border border-pink-200/50 shadow-sm">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/60 backdrop-blur-sm border border-pink-200/50 shadow-sm animate-pulse">
                 <span className="text-sm text-foreground/80 font-medium">
                   {getCommunityText()}
                 </span>
