@@ -19,6 +19,7 @@ import AgeMigrationPopup from "@/components/AgeMigrationPopup";
 import { needsAgeMigration } from "@/lib/childAges";
 import { toast } from "sonner";
 import { useMicrocopy } from "@/hooks/use-microcopy";
+import { MomCardInfo, MomCardMicroText } from "@/components/MomCard";
 
 // Demo profile for testing UI
 const demoProfile: ProfileMatch = {
@@ -535,24 +536,41 @@ export default function Discover() {
           {getText("discover_title", "Ανακάλυψε Μαμάδες")}
         </h1>
 
-        {/* Sorting Dropdown */}
+        {/* Sorting Dropdown with active indication */}
         <div className="flex flex-col items-center gap-1">
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-            <SelectTrigger className="w-[220px] bg-background/80 backdrop-blur-sm">
-              <SelectValue placeholder="Ταξινόμηση" />
+            <SelectTrigger className="w-[240px] bg-background border-2 border-primary/30 shadow-sm">
+              <SelectValue>
+                {sortBy === 'recommended' && <span className="flex items-center gap-2">✨ Προτεινόμενες για εσένα</span>}
+                {sortBy === 'nearby' && <span className="flex items-center gap-2">📍 Πιο κοντά μου</span>}
+                {sortBy === 'lifestyle' && <span className="flex items-center gap-2">🤍 Παρόμοιο lifestyle</span>}
+                {sortBy === 'same_stage' && <span className="flex items-center gap-2">👶 Ίδιο στάδιο</span>}
+              </SelectValue>
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recommended">
-                <span className="flex items-center gap-2">✨ Προτεινόμενες για εσένα</span>
+            <SelectContent className="bg-background border-2 border-primary/20 shadow-xl z-50">
+              <SelectItem value="recommended" className="cursor-pointer">
+                <span className="flex items-center gap-2">
+                  ✨ Προτεινόμενες για εσένα
+                  {sortBy === 'recommended' && <span className="ml-auto text-primary">✓</span>}
+                </span>
               </SelectItem>
-              <SelectItem value="nearby">
-                <span className="flex items-center gap-2">📍 Πιο κοντά μου</span>
+              <SelectItem value="nearby" className="cursor-pointer">
+                <span className="flex items-center gap-2">
+                  📍 Πιο κοντά μου
+                  {sortBy === 'nearby' && <span className="ml-auto text-primary">✓</span>}
+                </span>
               </SelectItem>
-              <SelectItem value="lifestyle">
-                <span className="flex items-center gap-2">🤍 Παρόμοιο lifestyle</span>
+              <SelectItem value="lifestyle" className="cursor-pointer">
+                <span className="flex items-center gap-2">
+                  🤍 Παρόμοιο lifestyle
+                  {sortBy === 'lifestyle' && <span className="ml-auto text-primary">✓</span>}
+                </span>
               </SelectItem>
-              <SelectItem value="same_stage">
-                <span className="flex items-center gap-2">👶 Ίδιο στάδιο</span>
+              <SelectItem value="same_stage" className="cursor-pointer">
+                <span className="flex items-center gap-2">
+                  👶 Ίδιο στάδιο
+                  {sortBy === 'same_stage' && <span className="ml-auto text-primary">✓</span>}
+                </span>
               </SelectItem>
             </SelectContent>
           </Select>
@@ -694,92 +712,36 @@ export default function Discover() {
             </div>
 
             <div className="p-4 space-y-3">
-              {/* Match Stats */}
-              {(currentProfile.commonInterestsCount !== undefined) && (
-                <div className="flex items-center justify-between bg-gradient-to-r from-pink-50 to-purple-50 p-2 rounded-lg border border-pink-200">
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-medium text-foreground">Κοινά ενδιαφέροντα:</span>
-                  </div>
-                  <Badge variant="secondary" className="bg-primary/20 text-primary font-bold">
-                    {currentProfile.commonInterestsCount}/{currentProfile.totalInterests || currentProfile.interests?.length || 0}
-                  </Badge>
-                </div>
-              )}
+              {/* Mom Card Info - Standardized structure */}
+              <MomCardInfo profile={currentProfile} currentUser={currentUser} />
 
-              {/* Location Badge - profile-based, no GPS */}
-              {locationBadge && (
-                <div className={`flex items-center justify-center p-2 rounded-lg border shadow-sm ${
-                  locationBadge.boost >= 2 
-                    ? 'bg-gradient-to-r from-orange-100 to-amber-100 border-orange-200' 
-                    : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
-                }`}>
-                  <span className={`text-sm font-semibold ${
-                    locationBadge.boost >= 2 ? 'text-orange-700' : 'text-blue-700'
-                  }`}>
+              {/* Boost Badges (max 2) */}
+              <div className="flex flex-wrap gap-2">
+                {/* Location Badge - profile-based, no GPS */}
+                {locationBadge && (
+                  <Badge className={`${
+                    locationBadge.boost >= 2 
+                      ? 'bg-gradient-to-r from-orange-100 to-amber-100 border-orange-200 text-orange-700' 
+                      : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200 text-blue-700'
+                  } text-xs`}>
                     {locationBadge.text} {locationBadge.boost >= 2 ? '🔥🔥' : '🔥'}
-                  </span>
-                </div>
-              )}
+                  </Badge>
+                )}
 
-              {/* Similar Age Badge */}
-              {hasSimilarAgeChildren() && (
-                <div className="flex items-center justify-center bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg border border-purple-200 shadow-sm">
-                  <span className="text-sm font-semibold text-purple-700">
-                    {getText("badge_same_stage", "Στο ίδιο στάδιο με εσένα ✨")}
-                  </span>
-                </div>
-              )}
+                {/* Similar Age Badge */}
+                {hasSimilarAgeChildren() && (
+                  <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 border-purple-200 text-purple-700 text-xs">
+                    {getText("badge_same_stage", "Στο ίδιο στάδιο ✨")}
+                  </Badge>
+                )}
+              </div>
 
-              {/* Similar Lifestyle Badge - enhanced with location boost */}
-              {similarLifestyle.length > 0 && (
-                <div className={`flex items-center justify-center gap-2 p-2 rounded-lg border shadow-sm ${
-                  currentProfile.locationBoost === 3
-                    ? 'bg-gradient-to-r from-rose-100 via-pink-100 to-orange-100 border-rose-300'
-                    : 'bg-gradient-to-r from-rose-50 to-orange-50 border-rose-200'
-                }`}>
-                  <span className={`text-sm font-semibold ${
-                    currentProfile.locationBoost === 3 ? 'text-rose-700' : 'text-rose-600'
-                  }`}>
-                    {getText("badge_similar_lifestyle", "🤍 Παρόμοια καθημερινότητα")} {currentProfile.locationBoost === 3 ? '🔥🔥🔥' : ''}
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {similarLifestyle.slice(0, 2).map((interest, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-[10px] px-1.5 py-0 bg-rose-100 text-rose-700 border-rose-200">
-                        {interest}
-                      </Badge>
-                    ))}
-                    {similarLifestyle.length > 2 && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-rose-300 text-rose-600">
-                        +{similarLifestyle.length - 2}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Children Info with Icons */}
-              {currentProfile.children && Array.isArray(currentProfile.children) && currentProfile.children.length > 0 && (
-                <div className="bg-gradient-to-br from-pink-50 to-purple-50 p-2 rounded-lg border border-pink-200">
-                  <div className="flex items-center gap-2 text-xs mb-1">
-                    <User className="w-3 h-3 text-primary" />
-                    <span className="font-bold text-foreground">Παιδιά:</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {currentProfile.children.map((child: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-1 bg-white/80 px-2 py-0.5 rounded-full text-xs">
-                        <span>{child.gender === 'boy' ? '👦' : child.gender === 'girl' ? '👧' : '👶'}</span>
-                        <span className="font-medium">{child.ageGroup || child.age}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+              {/* Bio preview */}
               {currentProfile.bio && (
-                <p className="text-xs text-foreground/90 font-medium line-clamp-2">{currentProfile.bio}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">{currentProfile.bio}</p>
               )}
 
+              {/* Interests chips (max 4) */}
               {currentProfile.interests && currentProfile.interests.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {currentProfile.interests.slice(0, 4).map((interest) => (
@@ -794,6 +756,9 @@ export default function Discover() {
                   )}
                 </div>
               )}
+
+              {/* Micro-text under card */}
+              <MomCardMicroText profile={currentProfile} currentUser={currentUser} />
             </div>
           </Card>
         )}
