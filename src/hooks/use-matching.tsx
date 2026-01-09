@@ -36,6 +36,7 @@ interface MatchingFilters {
   ageRangeMonths: number;
   matchInterestsFilter: boolean;
   interestsThreshold: number;
+  prioritizeLifestyle: boolean;
 }
 
 export interface ProfileMatch {
@@ -56,7 +57,8 @@ export interface ProfileMatch {
   totalInterests?: number;
   ageMatchScore?: number;
   interestsMatchScore?: number;
-  hasLikedYou?: boolean; // NEW: indicates if this user already swiped yes
+  hasLikedYou?: boolean;
+  lifestyleMatchCount?: number;
 }
 
 export function useMatching() {
@@ -173,7 +175,8 @@ export function useMatching() {
         matchAgeFilter: currentProfile.match_age_filter || false,
         ageRangeMonths: currentProfile.age_range_months || 6,
         matchInterestsFilter: currentProfile.match_interests_filter || false,
-        interestsThreshold: (currentProfile as any).interests_threshold || 40
+        interestsThreshold: (currentProfile as any).interests_threshold || 40,
+        prioritizeLifestyle: (currentProfile as any).prioritize_lifestyle || false
       };
       setFilters(userFilters);
 
@@ -356,9 +359,35 @@ export function useMatching() {
         );
       }
 
+      // Lifestyle interest IDs for matching
+      const lifestyleInterestIds = [
+        'single_mom', 'working_mom', 'wfh_mom', 'stay_at_home', 'maternity_leave',
+        'with_support', 'without_support', 'relaxed_mom', 'anxious_mom', 'sleep_deprived',
+        'mom_studying', 'side_hustle', 'difficult_experience', 'special_needs', 'twin_mom',
+        'want_understanding', 'want_connection', 'want_coffee_company'
+      ];
+
+      // Calculate lifestyle match count for each profile
+      const profilesWithLifestyle = profilesWithInterestScore.map(profile => {
+        const userLifestyle = currentUserInterests.filter(i => 
+          lifestyleInterestIds.some(id => i.toLowerCase().includes(id.replace('_', ' ').toLowerCase()) || i.toLowerCase().includes(id.replace('_', '-').toLowerCase()))
+        );
+        const profileLifestyle = (profile.interests || []).filter(i => 
+          lifestyleInterestIds.some(id => i.toLowerCase().includes(id.replace('_', ' ').toLowerCase()) || i.toLowerCase().includes(id.replace('_', '-').toLowerCase()))
+        );
+        const lifestyleMatchCount = userLifestyle.filter(ui => 
+          profileLifestyle.some(pi => 
+            ui.toLowerCase() === pi.toLowerCase() || 
+            ui.replace(/[^\w\s]/g, '').toLowerCase() === pi.replace(/[^\w\s]/g, '').toLowerCase()
+          )
+        ).length;
+        
+        return { ...profile, lifestyleMatchCount };
+      });
+
       // Calculate overall match percentage
       // Weights: Location 40%, Kids Age 35%, Interests 25%
-      const profilesWithMatchPercentage = profilesWithInterestScore.map(profile => {
+      const profilesWithMatchPercentage = profilesWithLifestyle.map(profile => {
         const distanceScore = profile.distance <= 3 ? 100 : 
                               profile.distance <= 5 ? 90 :
                               profile.distance <= 10 ? 70 :
@@ -377,27 +406,40 @@ export function useMatching() {
         return { ...profile, matchPercentage };
       });
 
-      // SORT: 1) Users who liked you first! 2) Very close age match (±12 months), 3) Common interests, 4) Distance
+      // SORT: 1) Users who liked you first! 2) Lifestyle match (if enabled), 3) Very close age match (±12 months), 4) Common interests, 5) Distance
       profilesWithMatchPercentage.sort((a, b) => {
         // FIRST PRIORITY: Users who liked you appear at the top!
         if (a.hasLikedYou && !b.hasLikedYou) return -1;
         if (!a.hasLikedYou && b.hasLikedYou) return 1;
         
-        // SECOND PRIORITY: Very close child age (within 12 months)
+        // SECOND PRIORITY: Similar lifestyle (if prioritize_lifestyle is enabled)
+        if (userFilters.prioritizeLifestyle) {
+          const aHasLifestyle = (a.lifestyleMatchCount || 0) > 0;
+          const bHasLifestyle = (b.lifestyleMatchCount || 0) > 0;
+          if (aHasLifestyle && !bHasLifestyle) return -1;
+          if (!aHasLifestyle && bHasLifestyle) return 1;
+          // If both have lifestyle matches, sort by count
+          if (aHasLifestyle && bHasLifestyle) {
+            const lifestyleDiff = (b.lifestyleMatchCount || 0) - (a.lifestyleMatchCount || 0);
+            if (lifestyleDiff !== 0) return lifestyleDiff;
+          }
+        }
+        
+        // THIRD PRIORITY: Very close child age (within 12 months)
         const aCloseAge = (a as any).ageDiffMonths <= 12;
         const bCloseAge = (b as any).ageDiffMonths <= 12;
         if (aCloseAge && !bCloseAge) return -1;
         if (!aCloseAge && bCloseAge) return 1;
         
-        // Third: common interests (highest first)
+        // Fourth: common interests (highest first)
         const interestsDiff = (b.commonInterestsCount || 0) - (a.commonInterestsCount || 0);
         if (interestsDiff !== 0) return interestsDiff;
         
-        // Fourth: distance (closest first)
+        // Fifth: distance (closest first)
         const distanceDiff = (a.distance || 9999) - (b.distance || 9999);
         if (distanceDiff !== 0) return distanceDiff;
         
-        // Fifth: kids age match score (highest first)
+        // Sixth: kids age match score (highest first)
         return (b.ageMatchScore || 0) - (a.ageMatchScore || 0);
       });
 
