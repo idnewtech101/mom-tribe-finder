@@ -137,11 +137,10 @@ export default function ProfileNew() {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      toast.error(language === "el" ? "Σφάλμα φόρτωσης προφίλ" : "Error loading profile");
-      if (isOwnProfile) {
-        await supabase.auth.signOut();
-        navigate("/auth");
-      } else {
+      toast.error(language === "el" ? "Σφάλμα φόρτωσης προφίλ. Δοκίμασε ξανά." : "Error loading profile. Please try again.");
+      // Don't sign out on profile error - might be transient network issue
+      // Just show error and let user retry
+      if (!isOwnProfile) {
         navigate(-1);
       }
     } finally {

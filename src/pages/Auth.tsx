@@ -58,8 +58,9 @@ export default function Auth() {
 
         if (profileError) {
           console.error('Profile error:', profileError);
-          await supabase.auth.signOut();
-          toast.error("Σφάλμα με το προφίλ. Παρακαλώ συνδεθείτε ξανά.");
+          // Don't sign out on profile error - might be transient
+          // Just redirect to profile setup to let them fix it
+          navigate("/profile-setup");
           return;
         }
 
@@ -178,8 +179,10 @@ export default function Auth() {
 
         if (profileError) {
           console.error('Profile error:', profileError);
-          await supabase.auth.signOut();
-          toast.error("Σφάλμα με το προφίλ. Παρακαλώ δοκιμάστε ξανά.");
+          // Don't sign out on profile error - might be transient
+          // Redirect to profile setup instead
+          showWelcome();
+          setTimeout(() => navigate("/profile-setup"), 2000);
           return;
         }
 
