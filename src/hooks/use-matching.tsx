@@ -59,6 +59,10 @@ export interface ProfileMatch {
   interestsMatchScore?: number;
   hasLikedYou?: boolean;
   lifestyleMatchCount?: number;
+  // Location boost indicators (profile-based, no GPS)
+  isSameCity?: boolean;
+  isSameArea?: boolean;
+  locationBoost?: number; // 1 = same city, 2 = same area, 3 = same area + lifestyle
 }
 
 export function useMatching() {
@@ -262,58 +266,51 @@ export function useMatching() {
         return hasPhoto && (hasInterests || hasChildren);
       });
 
-      // Calculate distance for all profiles - batch calculate to reduce latency
-      // Only calculate precise distance if user has location, otherwise use fallback
-      const hasUserLocation = currentProfile.latitude && currentProfile.longitude;
+      // PROFILE-BASED LOCATION MATCHING (NO GPS!)
+      // Calculate location boost based on declared city/area only
       const manualDistancePref = userFilters.distancePreferenceKm;
       
-      const profilesWithDistance = profilesWithScores.map(profile => {
-        let distance = 9999;
+      const profilesWithLocation = profilesWithScores.map(profile => {
+        const isSameArea = profile.area && currentProfile.area && 
+                           profile.area.toLowerCase() === currentProfile.area.toLowerCase();
+        const isSameCity = profile.city && currentProfile.city && 
+                           profile.city.toLowerCase() === currentProfile.city.toLowerCase();
         
-        if (hasUserLocation && profile.latitude && profile.longitude) {
-          // Quick haversine calculation inline instead of edge function call
-          const R = 6371; // Earth's radius in km
-          const dLat = (profile.latitude - currentProfile.latitude!) * Math.PI / 180;
-          const dLon = (profile.longitude - currentProfile.longitude!) * Math.PI / 180;
-          const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(currentProfile.latitude! * Math.PI / 180) * Math.cos(profile.latitude * Math.PI / 180) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          distance = R * c;
+        // Distance estimation based on profile data only (no GPS)
+        let distance = 9999;
+        if (isSameArea) {
+          distance = 1; // Same area = 🔥🔥 very close
+        } else if (isSameCity) {
+          distance = 10; // Same city = 🔥 close
         } else {
-          // No GPS - use city/area based distance estimation
-          if (profile.area === currentProfile.area) {
-            distance = 1; // Same area = very close
-          } else if (profile.city === currentProfile.city) {
-            distance = 10; // Same city = close
-          } else {
-            // Different city - estimate based on whether user wants all of Greece
-            // For manual distance selection: 500km means show everyone
-            distance = manualDistancePref >= 500 ? 100 : 200;
-          }
+          // Different city - show based on distance preference
+          distance = manualDistancePref >= 500 ? 100 : 200;
         }
         
-        return { ...profile, distance };
+        return { 
+          ...profile, 
+          distance,
+          isSameCity: !!isSameCity,
+          isSameArea: !!isSameArea,
+          locationBoost: isSameArea ? 2 : (isSameCity ? 1 : 0)
+        };
       });
 
-      // APPLY LOCATION FILTER
-      let filteredProfiles = profilesWithDistance;
+      // APPLY LOCATION FILTER (profile-based)
+      let filteredProfiles = profilesWithLocation;
       if (userFilters.showLocationFilter) {
-        // When no GPS and manual distance is 500km (all Greece), show everyone
-        if (!hasUserLocation && manualDistancePref >= 500) {
-          // Show all profiles from Greece - no distance filtering
-          filteredProfiles = profilesWithDistance;
-        } else if (!hasUserLocation && manualDistancePref >= 100) {
+        if (manualDistancePref >= 500) {
+          // Show all profiles from Greece - no filtering
+          filteredProfiles = profilesWithLocation;
+        } else if (manualDistancePref >= 100) {
           // Show profiles from same city only
-          filteredProfiles = profilesWithDistance.filter(profile => 
-            profile.city === currentProfile.city
-          );
+          filteredProfiles = profilesWithLocation.filter(profile => profile.isSameCity);
+        } else if (manualDistancePref >= 20) {
+          // Same city preferred
+          filteredProfiles = profilesWithLocation.filter(profile => profile.isSameCity);
         } else {
-          // Standard distance filtering (works with GPS or area-based estimation)
-          filteredProfiles = filteredProfiles.filter(profile => 
-            profile.distance <= manualDistancePref
-          );
+          // Same area only (strict local)
+          filteredProfiles = profilesWithLocation.filter(profile => profile.isSameArea);
         }
       }
 
@@ -382,23 +379,28 @@ export function useMatching() {
           )
         ).length;
         
-        return { ...profile, lifestyleMatchCount };
+        // Calculate location boost with lifestyle: same area + lifestyle = 🔥🔥🔥
+        const locationBoost = profile.isSameArea && lifestyleMatchCount > 0 ? 3 :
+                              profile.isSameArea ? 2 :
+                              profile.isSameCity ? 1 : 0;
+        
+        return { ...profile, lifestyleMatchCount, locationBoost };
       });
 
       // Calculate overall match percentage
       // Weights: Location 40%, Kids Age 35%, Interests 25%
+      // Location score based on profile data (no GPS)
       const profilesWithMatchPercentage = profilesWithLifestyle.map(profile => {
-        const distanceScore = profile.distance <= 3 ? 100 : 
-                              profile.distance <= 5 ? 90 :
-                              profile.distance <= 10 ? 70 :
-                              profile.distance <= 20 ? 50 : 30;
+        // Location score: same area = 100, same city = 70, different = 30
+        const locationScore = profile.isSameArea ? 100 : 
+                              profile.isSameCity ? 70 : 30;
         
         const locationWeight = 0.40;
         const ageWeight = 0.35;
         const interestsWeight = 0.25;
 
         const matchPercentage = Math.round(
-          (distanceScore * locationWeight) +
+          (locationScore * locationWeight) +
           ((profile.ageMatchScore || 0) * ageWeight) +
           ((profile.interestsMatchScore || 0) * interestsWeight)
         );
@@ -406,38 +408,38 @@ export function useMatching() {
         return { ...profile, matchPercentage };
       });
 
-      // SORT: 1) Users who liked you first! 2) Lifestyle match (if enabled), 3) Very close age match (±12 months), 4) Common interests, 5) Distance
+      // SORT: 1) Users who liked you, 2) Location boost, 3) Lifestyle, 4) Age match, 5) Interests
       profilesWithMatchPercentage.sort((a, b) => {
         // FIRST PRIORITY: Users who liked you appear at the top!
         if (a.hasLikedYou && !b.hasLikedYou) return -1;
         if (!a.hasLikedYou && b.hasLikedYou) return 1;
         
-        // SECOND PRIORITY: Similar lifestyle (if prioritize_lifestyle is enabled)
+        // SECOND PRIORITY: Location boost (profile-based, no GPS)
+        // 🔥🔥🔥 same area + lifestyle > 🔥🔥 same area > 🔥 same city
+        const locationDiff = (b.locationBoost || 0) - (a.locationBoost || 0);
+        if (locationDiff !== 0) return locationDiff;
+        
+        // THIRD PRIORITY: Similar lifestyle
         if (userFilters.prioritizeLifestyle) {
           const aHasLifestyle = (a.lifestyleMatchCount || 0) > 0;
           const bHasLifestyle = (b.lifestyleMatchCount || 0) > 0;
           if (aHasLifestyle && !bHasLifestyle) return -1;
           if (!aHasLifestyle && bHasLifestyle) return 1;
-          // If both have lifestyle matches, sort by count
           if (aHasLifestyle && bHasLifestyle) {
             const lifestyleDiff = (b.lifestyleMatchCount || 0) - (a.lifestyleMatchCount || 0);
             if (lifestyleDiff !== 0) return lifestyleDiff;
           }
         }
         
-        // THIRD PRIORITY: Very close child age (within 12 months)
+        // FOURTH PRIORITY: Very close child age (within 12 months)
         const aCloseAge = (a as any).ageDiffMonths <= 12;
         const bCloseAge = (b as any).ageDiffMonths <= 12;
         if (aCloseAge && !bCloseAge) return -1;
         if (!aCloseAge && bCloseAge) return 1;
         
-        // Fourth: common interests (highest first)
+        // Fifth: common interests (highest first)
         const interestsDiff = (b.commonInterestsCount || 0) - (a.commonInterestsCount || 0);
         if (interestsDiff !== 0) return interestsDiff;
-        
-        // Fifth: distance (closest first)
-        const distanceDiff = (a.distance || 9999) - (b.distance || 9999);
-        if (distanceDiff !== 0) return distanceDiff;
         
         // Sixth: kids age match score (highest first)
         return (b.ageMatchScore || 0) - (a.ageMatchScore || 0);
