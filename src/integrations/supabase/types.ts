@@ -552,6 +552,7 @@ export type Database = {
           mom_badge: string | null
           notification_settings: Json | null
           photo_rules_seen: boolean | null
+          prioritize_lifestyle: boolean | null
           privacy_settings: Json | null
           profile_completed: boolean | null
           profile_photo_url: string | null
@@ -595,6 +596,7 @@ export type Database = {
           mom_badge?: string | null
           notification_settings?: Json | null
           photo_rules_seen?: boolean | null
+          prioritize_lifestyle?: boolean | null
           privacy_settings?: Json | null
           profile_completed?: boolean | null
           profile_photo_url?: string | null
@@ -638,6 +640,7 @@ export type Database = {
           mom_badge?: string | null
           notification_settings?: Json | null
           photo_rules_seen?: boolean | null
+          prioritize_lifestyle?: boolean | null
           privacy_settings?: Json | null
           profile_completed?: boolean | null
           profile_photo_url?: string | null
