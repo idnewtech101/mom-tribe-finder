@@ -19,7 +19,7 @@ import AgeMigrationPopup from "@/components/AgeMigrationPopup";
 import { needsAgeMigration } from "@/lib/childAges";
 import { toast } from "sonner";
 import { useMicrocopy } from "@/hooks/use-microcopy";
-import { MomCardInfo, MomCardMicroText } from "@/components/MomCard";
+import { MomCardInfo, MomCardMicroText, MomCardBio } from "@/components/MomCard";
 
 // Demo profile for testing UI
 const demoProfile: ProfileMatch = {
@@ -749,10 +749,12 @@ export default function Discover() {
                 )}
               </div>
 
-              {/* Bio preview */}
-              {currentProfile.bio && (
-                <p className="text-xs text-muted-foreground line-clamp-2">{currentProfile.bio}</p>
-              )}
+              {/* Bio preview with truncation */}
+              <MomCardBio 
+                bio={currentProfile.bio} 
+                profileId={currentProfile.id} 
+                maxLength={120} 
+              />
 
               {/* Interests chips (max 4) */}
               {currentProfile.interests && currentProfile.interests.length > 0 && (

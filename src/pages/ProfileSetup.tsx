@@ -17,10 +17,24 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import ProfileSuccessScreen from "@/components/ProfileSuccessScreen";
 import ChildrenManager from "@/components/ChildrenManager";
 import { useMicrocopy } from "@/hooks/use-microcopy";
+// Bio validation: no links, emails, phone numbers
+const bioValidation = (value: string | undefined) => {
+  if (!value) return true;
+  const linkPattern = /(https?:\/\/|www\.)/i;
+  const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const phonePattern = /(\+?\d{10,}|\d{3,}[-.\s]\d{3,}[-.\s]\d{3,})/;
+  
+  if (linkPattern.test(value)) return false;
+  if (emailPattern.test(value)) return false;
+  if (phonePattern.test(value)) return false;
+  return true;
+};
+
 const profileSetupSchema = z.object({
   username: z.string().trim().min(3, { message: "Το username πρέπει να είναι τουλάχιστον 3 χαρακτήρες" }).max(20, { message: "Το username πρέπει να είναι μικρότερο από 20 χαρακτήρες" }).regex(/^[a-zA-Z0-9_]+$/, { message: "Το username μπορεί να περιέχει μόνο γράμματα, αριθμούς και _" }),
   city: z.string().trim().min(1, { message: "Η πόλη είναι υποχρεωτική" }).max(100, { message: "Η πόλη πρέπει να είναι μικρότερη από 100 χαρακτήρες" }),
   area: z.string().trim().min(1, { message: "Η περιοχή είναι υποχρεωτική" }).max(100, { message: "Η περιοχή πρέπει να είναι μικρότερη από 100 χαρακτήρες" }),
+  bio: z.string().max(180, { message: "Το bio πρέπει να είναι μέχρι 180 χαρακτήρες" }).refine(bioValidation, { message: "Δεν επιτρέπονται links, emails ή τηλέφωνα" }).optional(),
   children: z.array(z.object({
     name: z.string().max(50).optional(),
     ageGroup: z.string().min(1, { message: "Η ηλικία είναι υποχρεωτική" }),
@@ -99,6 +113,7 @@ export default function ProfileSetup() {
   const [matchPreference, setMatchPreference] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [bio, setBio] = useState("");
   // Location coordinates are no longer collected during profile setup
   // They will be requested in Discover page
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
@@ -142,6 +157,7 @@ export default function ProfileSetup() {
         setChildren((profile.children as Array<{ name?: string; ageGroup: string }>) || [{ ageGroup: "" }]);
         setMatchPreference(profile.match_preference || "");
         setInterests(profile.interests || []);
+        setBio(profile.bio || "");
         
         // Load existing photos
         if (profile.profile_photos_urls && profile.profile_photos_urls.length > 0) {
@@ -217,6 +233,7 @@ export default function ProfileSetup() {
       username,
       city,
       area,
+      bio,
       children,
       matchPreference,
       interests
@@ -248,6 +265,7 @@ export default function ProfileSetup() {
       username,
       city,
       area,
+      bio,
       children,
       matchPreference,
       interests
@@ -330,6 +348,7 @@ export default function ProfileSetup() {
         username: validData.username,
         city: validData.city,
         area: validData.area,
+        bio: validData.bio || null,
         children: validData.children,
         child_age_group: validData.children[0]?.ageGroup || '',
         match_preference: validData.matchPreference,
@@ -528,6 +547,32 @@ export default function ProfileSetup() {
                 />
               )}
             </div>
+          </div>
+
+          {/* Bio Section */}
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <div className="relative">
+              <textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => {
+                  if (e.target.value.length <= 180) {
+                    setBio(e.target.value);
+                  }
+                }}
+                placeholder="Λίγα λόγια για εμένα ως μαμά…"
+                maxLength={180}
+                rows={3}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                {bio.length} / 180
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Tip: πες ηλικία παιδιού & τι ψάχνεις σε παρέα 💗
+            </p>
           </div>
 
           {/* Children Section */}
