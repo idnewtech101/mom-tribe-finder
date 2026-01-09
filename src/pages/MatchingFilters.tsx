@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { MapPin, Baby, Heart, Save, ArrowLeft, X } from "lucide-react";
+import { MapPin, Baby, Heart, Save, ArrowLeft, X, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import mascot from "@/assets/mascot.jpg";
@@ -22,6 +22,7 @@ export default function MatchingFilters() {
   const [ageRangeMonths, setAgeRangeMonths] = useState(3);
   const [matchInterestsFilter, setMatchInterestsFilter] = useState(false);
   const [interestsThreshold, setInterestsThreshold] = useState(40);
+  const [prioritizeLifestyle, setPrioritizeLifestyle] = useState(false);
 
   useEffect(() => {
     loadFilters();
@@ -56,6 +57,7 @@ export default function MatchingFilters() {
         setAgeRangeMonths(data.age_range_months || 3);
         setMatchInterestsFilter(data.match_interests_filter || false);
         setInterestsThreshold((data as any).interests_threshold || 40);
+        setPrioritizeLifestyle((data as any).prioritize_lifestyle || false);
       }
     } catch (error) {
       console.error("Error loading filters:", error);
@@ -79,7 +81,8 @@ export default function MatchingFilters() {
           match_age_filter: matchAgeFilter,
           age_range_months: ageRangeMonths,
           match_interests_filter: matchInterestsFilter,
-          interests_threshold: interestsThreshold
+          interests_threshold: interestsThreshold,
+          prioritize_lifestyle: prioritizeLifestyle
         })
         .eq("id", user.id);
 
@@ -246,6 +249,28 @@ export default function MatchingFilters() {
                   <span>80%</span>
                 </div>
               </div>
+            )}
+          </Card>
+
+          {/* Lifestyle Priority */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-primary" />
+                <div>
+                  <Label className="text-base font-semibold">Παρόμοιο Lifestyle</Label>
+                  <p className="text-sm text-muted-foreground">Δείξε πρώτα μαμάδες με παρόμοιο τρόπο ζωής</p>
+                </div>
+              </div>
+              <Switch
+                checked={prioritizeLifestyle}
+                onCheckedChange={setPrioritizeLifestyle}
+              />
+            </div>
+            {prioritizeLifestyle && (
+              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+                👩‍👧 Single Mom, 💻 WFH, 🏡 Stay-at-Home κ.ά. θα εμφανίζονται πρώτες!
+              </p>
             )}
           </Card>
         </div>

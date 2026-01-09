@@ -393,17 +393,23 @@ export default function AskMoms() {
     fetchAnswers(selectedQuestion!.id);
   };
 
+  // Helper to get only first name for privacy
+  const getFirstName = (fullName: string | undefined) => {
+    if (!fullName) return 'Μαμά';
+    return fullName.split(' ')[0];
+  };
+
   const getDisplayName = (question: Question) => {
     if (question.display_mode === 'anonymous') return 'Ανώνυμη 🌸';
     if (question.display_mode === 'pseudonym') return question.pseudonym || 'Ανώνυμη 🌸';
-    return question.profiles?.full_name || 'Μαμά';
+    return getFirstName(question.profiles?.full_name);
   };
 
   const getAnswerDisplayName = (answer: Answer) => {
     if (answer.pseudonym) {
       return answer.pseudonym;
     }
-    return answer.profiles?.full_name || 'Μαμά';
+    return getFirstName(answer.profiles?.full_name);
   };
 
   const canEditOrDelete = (userId: string) => {
