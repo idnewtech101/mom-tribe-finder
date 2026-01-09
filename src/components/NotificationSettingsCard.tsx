@@ -155,17 +155,6 @@ export function NotificationSettingsCard({
         {/* Other notification toggles */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-              📧 Email notifications
-            </Label>
-            <Switch
-              id="email"
-              checked={profile?.notification_settings?.email ?? true}
-              onCheckedChange={(checked) => onNotificationChange('email', checked)}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
             <Label htmlFor="matches" className="text-sm font-medium flex items-center gap-2">
               💕 {language === "el" ? "Ειδοποιήσεις για matches" : "Match notifications"}
             </Label>

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, User } from "lucide-react";
 import { ProfileMatch } from "@/hooks/use-matching";
 import { useMicrocopy } from "@/hooks/use-microcopy";
+import { useNavigate } from "react-router-dom";
 
 interface MomCardInfoProps {
   profile: ProfileMatch;
@@ -137,6 +138,38 @@ export function MomCardInfo({ profile, currentUser, compact = false }: MomCardIn
             )}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Bio preview component with truncation
+interface MomCardBioProps {
+  bio: string | null | undefined;
+  profileId: string;
+  maxLength?: number;
+}
+
+export function MomCardBio({ bio, profileId, maxLength = 120 }: MomCardBioProps) {
+  const navigate = useNavigate();
+  
+  if (!bio) return null;
+  
+  const needsTruncation = bio.length > maxLength;
+  const displayText = needsTruncation ? bio.slice(0, maxLength).trim() + '…' : bio;
+  
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {displayText}
+      </p>
+      {needsTruncation && (
+        <button
+          onClick={() => navigate(`/profile/${profileId}`)}
+          className="text-xs text-primary font-medium hover:underline"
+        >
+          Περισσότερα
+        </button>
       )}
     </div>
   );
