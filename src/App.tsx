@@ -23,6 +23,7 @@ import Marketplace from "./pages/Marketplace";
 import Recipes from "./pages/Recipes";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+import NotificationSettings from "./pages/NotificationSettings";
 import PrivacyTerms from "./pages/PrivacyTerms";
 import NotFound from "./pages/NotFound";
 
@@ -74,6 +75,7 @@ const App = () => (
           <Route path="/marketplace" element={<AuthGuard><><Marketplace /><MomAlerts /><BottomNav /></></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><><Profile /><MomAlerts /><BottomNav /></></AuthGuard>} />
           <Route path="/profile/:userId" element={<AuthGuard><><Profile /><MomAlerts /><BottomNav /></></AuthGuard>} />
+          <Route path="/notification-settings" element={<AuthGuard><NotificationSettings /></AuthGuard>} />
           <Route path="/privacy-terms" element={<PrivacyTerms />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

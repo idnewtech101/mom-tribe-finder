@@ -100,7 +100,7 @@ export default function Discover() {
           // Check if location dialog has been shown before (tied to user account)
           const { data: profileData } = await supabase
             .from("profiles")
-            .select("location_popup_shown, children")
+            .select("location_popup_shown, children, welcome_popup_shown")
             .eq("id", user.id)
             .single();
           
@@ -110,6 +110,11 @@ export default function Discover() {
           if (profileDataAny && profileDataAny.location_popup_shown === false) {
             // First time - show location dialog (only if explicitly false, not null/undefined)
             setShowLocationDialog(true);
+          }
+
+          // Check if swipe tutorial has been shown (first login only - user-based)
+          if (profileDataAny && profileDataAny.welcome_popup_shown === false) {
+            setShowTutorial(true);
           }
 
           // Check if age migration is needed
@@ -201,13 +206,21 @@ export default function Discover() {
     }
   };
 
-  // Check if tutorial has been shown before
-  useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('discover_tutorial_shown');
-    if (!hasSeenTutorial && !loading) {
-      setShowTutorial(true);
+  // Dismiss tutorial and mark as shown in database (user-based, not localStorage)
+  const dismissTutorial = async () => {
+    setShowTutorial(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ welcome_popup_shown: true })
+          .eq("id", user.id);
+      }
+    } catch (error) {
+      console.error("Error marking tutorial as shown:", error);
     }
-  }, [loading]);
+  };
 
   // Filter out current user and add demo profile
   const filteredProfiles = profiles.filter(profile => profile.id !== currentUserId);
@@ -852,16 +865,13 @@ export default function Discover() {
         />
       )}
 
-      {/* Tutorial Overlay */}
+      {/* Tutorial Overlay - First login only (user-based, stored in database) */}
       {showTutorial && (
         <div 
           className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-          onClick={() => {
-            setShowTutorial(false);
-            localStorage.setItem('discover_tutorial_shown', 'true');
-          }}
+          onClick={dismissTutorial}
         >
-          <div className="bg-white rounded-[25px] p-6 max-w-sm text-center space-y-4">
+          <div className="bg-white rounded-[25px] p-6 max-w-sm text-center space-y-4 animate-scale-in">
             <h2 className="text-2xl font-bold text-primary" style={{ fontFamily: "'Pacifico', cursive" }}>
               Πώς λειτουργεί 💕
             </h2>
@@ -885,10 +895,7 @@ export default function Discover() {
                 <p className="text-left text-sm">Αν σας αρέσετε αμοιβαία, είναι <strong>Match!</strong></p>
               </div>
             </div>
-            <Button className="w-full mt-4" onClick={() => {
-              setShowTutorial(false);
-              localStorage.setItem('discover_tutorial_shown', 'true');
-            }}>
+            <Button className="w-full mt-4" onClick={dismissTutorial}>
               Κατάλαβα! Ας ξεκινήσουμε 🌸
             </Button>
           </div>

@@ -42,6 +42,23 @@ const getSimilarLifestyle = (userInterests: string[] | null, profileInterests: s
   );
 };
 
+interface MomCardWrapperProps {
+  children: React.ReactNode;
+  animationKey?: string | number;
+}
+
+export function MomCardWrapper({ children, animationKey }: MomCardWrapperProps) {
+  return (
+    <div 
+      key={animationKey}
+      className="animate-fade-in transition-all duration-300 ease-out"
+      style={{ animationDuration: '0.4s' }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function MomCardInfo({ profile, currentUser, compact = false }: MomCardInfoProps) {
   const { getText } = useMicrocopy();
   
@@ -61,7 +78,7 @@ export function MomCardInfo({ profile, currentUser, compact = false }: MomCardIn
   };
 
   return (
-    <div className={`space-y-2 ${compact ? 'text-xs' : ''}`}>
+    <div className={`space-y-2 ${compact ? 'text-xs' : ''} animate-fade-in`}>
       {/* 👩‍🍼 Mom of X children */}
       <div className="flex items-center gap-2">
         <span className="text-base">👩‍🍼</span>
