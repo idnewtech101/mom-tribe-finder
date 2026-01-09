@@ -18,6 +18,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import AgeMigrationPopup from "@/components/AgeMigrationPopup";
 import { needsAgeMigration } from "@/lib/childAges";
 import { toast } from "sonner";
+import { useMicrocopy } from "@/hooks/use-microcopy";
 
 // Demo profile for testing UI
 const demoProfile: ProfileMatch = {
@@ -35,7 +36,10 @@ const demoProfile: ProfileMatch = {
   longitude: null,
   matchPercentage: 85,
   commonInterestsCount: 3,
-  totalInterests: 5
+  totalInterests: 5,
+  isSameCity: true,
+  isSameArea: false,
+  locationBoost: 1
 };
 
 export default function Discover() {
@@ -62,6 +66,7 @@ export default function Discover() {
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { getText } = useMicrocopy();
   const { mascotConfig, visible, hideMascot, showMatch, showEmptyDiscover } = useMascot();
   const { profiles, loading, currentUser, reloadProfiles } = useMatching();
   const [currentUserId, setCurrentUserId] = useState<string>("");
@@ -383,12 +388,26 @@ export default function Discover() {
     );
   }
 
+  // Get location text - profile based, no GPS tracking
   const getLocationText = () => {
-    if (currentProfile.distance && currentProfile.distance < 9999) {
-      return `${currentProfile.area}, ${currentProfile.city} - ${currentProfile.distance.toFixed(1)} km`;
+    if (currentProfile.area) {
+      return `${currentProfile.area}, ${currentProfile.city}`;
     }
-    return `${currentProfile.area}, ${currentProfile.city}`;
+    return currentProfile.city;
   };
+
+  // Get location badge based on profile-based matching
+  const getLocationBadge = () => {
+    if (currentProfile.isSameArea) {
+      return { text: getText("badge_same_area", "📍 Στην ίδια περιοχή"), boost: 2 };
+    }
+    if (currentProfile.isSameCity) {
+      return { text: getText("badge_same_city", "📍 Κοντά σου"), boost: 1 };
+    }
+    return null;
+  };
+
+  const locationBadge = getLocationBadge();
 
   const getChildrenText = () => {
     if (!currentProfile.children || !Array.isArray(currentProfile.children) || currentProfile.children.length === 0) {
@@ -653,20 +672,41 @@ export default function Discover() {
                 </div>
               )}
 
-              {/* Similar Age Badge */}
-              {hasSimilarAgeChildren() && (
-                <div className="flex items-center justify-center bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg border border-purple-200 shadow-sm">
-                  <span className="text-sm font-semibold text-purple-700">
-                    Στο ίδιο στάδιο με εσένα ✨
+              {/* Location Badge - profile-based, no GPS */}
+              {locationBadge && (
+                <div className={`flex items-center justify-center p-2 rounded-lg border shadow-sm ${
+                  locationBadge.boost >= 2 
+                    ? 'bg-gradient-to-r from-orange-100 to-amber-100 border-orange-200' 
+                    : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+                }`}>
+                  <span className={`text-sm font-semibold ${
+                    locationBadge.boost >= 2 ? 'text-orange-700' : 'text-blue-700'
+                  }`}>
+                    {locationBadge.text} {locationBadge.boost >= 2 ? '🔥🔥' : '🔥'}
                   </span>
                 </div>
               )}
 
-              {/* Similar Lifestyle Badge */}
+              {/* Similar Age Badge */}
+              {hasSimilarAgeChildren() && (
+                <div className="flex items-center justify-center bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg border border-purple-200 shadow-sm">
+                  <span className="text-sm font-semibold text-purple-700">
+                    {getText("badge_same_stage", "Στο ίδιο στάδιο με εσένα ✨")}
+                  </span>
+                </div>
+              )}
+
+              {/* Similar Lifestyle Badge - enhanced with location boost */}
               {similarLifestyle.length > 0 && (
-                <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-rose-50 to-orange-50 p-2 rounded-lg border border-rose-200 shadow-sm">
-                  <span className="text-sm font-semibold text-rose-600">
-                    Παρόμοιο lifestyle 🫶
+                <div className={`flex items-center justify-center gap-2 p-2 rounded-lg border shadow-sm ${
+                  currentProfile.locationBoost === 3
+                    ? 'bg-gradient-to-r from-rose-100 via-pink-100 to-orange-100 border-rose-300'
+                    : 'bg-gradient-to-r from-rose-50 to-orange-50 border-rose-200'
+                }`}>
+                  <span className={`text-sm font-semibold ${
+                    currentProfile.locationBoost === 3 ? 'text-rose-700' : 'text-rose-600'
+                  }`}>
+                    {getText("badge_similar_lifestyle", "🤍 Παρόμοια καθημερινότητα")} {currentProfile.locationBoost === 3 ? '🔥🔥🔥' : ''}
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {similarLifestyle.slice(0, 2).map((interest, idx) => (

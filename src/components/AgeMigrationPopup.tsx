@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Plus, Trash2 } from "lucide-react";
 import ChildAgeSelector from "./ChildAgeSelector";
 import mascot from "@/assets/mascot.jpg";
+import { useMicrocopy } from "@/hooks/use-microcopy";
 
 interface ChildData {
   name?: string;
@@ -25,6 +26,7 @@ export default function AgeMigrationPopup({
   currentChildren,
   onSave
 }: AgeMigrationPopupProps) {
+  const { getText } = useMicrocopy();
   const [children, setChildren] = useState<ChildData[]>(
     currentChildren.length > 0 ? currentChildren : [{ ageGroup: "", gender: 'baby' }]
   );
@@ -101,18 +103,17 @@ export default function AgeMigrationPopup({
             />
             <div>
               <DialogTitle className="text-xl font-bold text-foreground">
-                Μικρή ενημέρωση 🤍
+                {getText("age_migration_title", "Μικρή ενημέρωση 🤍")}
               </DialogTitle>
             </div>
           </div>
 
           <p className="text-muted-foreground mb-4 leading-relaxed">
-            Ανανεώσαμε τις ηλικίες των παιδιών για πιο ταιριαστές γνωριμίες.
-            Θες να μας πεις ξανά την ηλικία του παιδιού σου; Παίρνει λιγότερο από ένα λεπτό ✨
+            {getText("age_migration_description", "Ανανεώσαμε τις ηλικίες των παιδιών για πιο ταιριαστές γνωριμίες. Θες να μας πεις ξανά την ηλικία του παιδιού σου; Παίρνει λιγότερο από ένα λεπτό ✨")}
           </p>
 
           <p className="text-sm text-muted-foreground mb-4">
-            Μπορείς να διαλέξεις περισσότερες ηλικίες, αν έχεις περισσότερα από ένα παιδάκια 🤍
+            {getText("age_migration_hint", "Μπορείς να διαλέξεις περισσότερες ηλικίες, αν έχεις περισσότερα από ένα παιδάκια 🤍")}
           </p>
 
           {/* Child tabs */}
@@ -147,7 +148,7 @@ export default function AgeMigrationPopup({
 
           {/* Gender selection for active child */}
           <div className="mb-4">
-            <p className="text-sm font-medium mb-2">Φύλο:</p>
+            <p className="text-sm font-medium mb-2">{getText("gender_label", "Φύλο:")}</p>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -192,7 +193,7 @@ export default function AgeMigrationPopup({
             onClick={addChild}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Προσθήκη Παιδιού
+            {getText("add_child_button", "Προσθήκη Παιδιού")}
           </Button>
 
           {/* Actions */}
@@ -203,7 +204,7 @@ export default function AgeMigrationPopup({
               className="flex-1"
               onClick={onClose}
             >
-              ΟΚ, αργότερα
+              {getText("later_button", "ΟΚ, αργότερα")}
             </Button>
 
             <Button
@@ -212,7 +213,7 @@ export default function AgeMigrationPopup({
               onClick={handleSave}
               disabled={saving || !allChildrenHaveAge}
             >
-              {saving ? "Αποθήκευση..." : "Αποθήκευση"}
+              {saving ? getText("saving_button", "Αποθήκευση...") : getText("save_button", "Αποθήκευση")}
             </Button>
           </div>
         </div>
