@@ -37,6 +37,7 @@ interface MatchingFilters {
   matchInterestsFilter: boolean;
   interestsThreshold: number;
   prioritizeLifestyle: boolean;
+  requiredInterests: string[];
 }
 
 export interface ProfileMatch {
@@ -183,7 +184,8 @@ export function useMatching() {
         ageRangeMonths: currentProfile.age_range_months || 6,
         matchInterestsFilter: currentProfile.match_interests_filter || false,
         interestsThreshold: (currentProfile as any).interests_threshold || 40,
-        prioritizeLifestyle: (currentProfile as any).prioritize_lifestyle || false
+        prioritizeLifestyle: (currentProfile as any).prioritize_lifestyle || false,
+        requiredInterests: (currentProfile as any).required_interests || []
       };
       setFilters(userFilters);
 
@@ -357,6 +359,23 @@ export function useMatching() {
         profilesWithInterestScore = profilesWithInterestScore.filter(profile => 
           profile.interestsMatchScore >= userFilters.interestsThreshold
         );
+      }
+
+      // APPLY REQUIRED INTERESTS FILTER
+      // If user has selected specific interests, only show profiles that have ALL of them
+      if (userFilters.requiredInterests && userFilters.requiredInterests.length > 0) {
+        profilesWithInterestScore = profilesWithInterestScore.filter(profile => {
+          const profileInterests = profile.interests || [];
+          // Check if profile has all required interests
+          return userFilters.requiredInterests.every(requiredId => 
+            profileInterests.some(profileInterest => 
+              profileInterest.toLowerCase().includes(requiredId.replace('_', ' ').toLowerCase()) ||
+              profileInterest.toLowerCase().includes(requiredId.replace('_', '-').toLowerCase()) ||
+              profileInterest.toLowerCase().includes(requiredId.toLowerCase())
+            )
+          );
+        });
+        console.log("After required interests filter:", profilesWithInterestScore.length);
       }
 
       // Lifestyle interest IDs for matching
