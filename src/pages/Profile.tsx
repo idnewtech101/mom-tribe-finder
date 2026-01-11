@@ -17,6 +17,8 @@ import { ReportProfileModal } from "@/components/ReportProfileModal";
 import { PhotoModerationNotification } from "@/components/PhotoModerationNotification";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { NotificationSettingsCard } from "@/components/NotificationSettingsCard";
+import { INTERESTS } from "@/lib/interests";
+import { useLanguage as useLang } from "@/contexts/LanguageContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +48,8 @@ export default function ProfileNew() {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [editedBio, setEditedBio] = useState("");
   const [bioError, setBioError] = useState("");
+  const [isEditingInterests, setIsEditingInterests] = useState(false);
+  const [editedInterests, setEditedInterests] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProfile();
@@ -575,24 +579,113 @@ export default function ProfileNew() {
           </div>
         </Card>
 
-        {/* Interests */}
-        {profile.interests && profile.interests.length > 0 && (
-          <Card className="p-6 bg-gradient-to-br from-white/90 to-[#FDF7F9] border-2 border-[#F3DCE5] rounded-[28px] shadow-md">
-            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+        {/* Interests - Editable for own profile */}
+        <Card className="p-6 bg-gradient-to-br from-white/90 to-[#FDF7F9] border-2 border-[#F3DCE5] rounded-[28px] shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
               <span>💬</span> Ενδιαφέροντα
             </h3>
-            <div className="flex flex-wrap gap-3">
-              {profile.interests.map((interest: string) => (
-                <Badge
-                  key={interest}
-                  className="px-4 py-2 rounded-full bg-gradient-to-br from-[#FDF7F9] to-[#F5E8F0] border-2 border-[#F3DCE5] text-foreground font-medium shadow-sm hover:shadow-md transition-all"
-                >
-                  {interest}
-                </Badge>
-              ))}
+            {isOwnProfile && !isEditingInterests && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-primary hover:text-primary/80"
+                onClick={() => {
+                  setEditedInterests(profile.interests || []);
+                  setIsEditingInterests(true);
+                }}
+              >
+                <Pencil className="w-4 h-4 mr-1" />
+                Επεξεργασία
+              </Button>
+            )}
+          </div>
+          
+          {isOwnProfile && isEditingInterests ? (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Επίλεξε τα ενδιαφέροντα που σε εκφράζουν (μπορείς να αλλάξεις όποτε θέλεις)
+              </p>
+              <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto p-1">
+                {INTERESTS.map((interest) => {
+                  const isSelected = editedInterests.includes(interest.label.el);
+                  return (
+                    <button
+                      key={interest.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setEditedInterests(editedInterests.filter(i => i !== interest.label.el));
+                        } else {
+                          setEditedInterests([...editedInterests, interest.label.el]);
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        isSelected 
+                          ? 'bg-primary text-primary-foreground shadow-md scale-105' 
+                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                      }`}
+                    >
+                      {interest.label.el}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between pt-3 border-t">
+                <p className="text-xs text-primary font-medium">
+                  ✨ {editedInterests.length} επιλεγμένα
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditingInterests(false);
+                      setEditedInterests([]);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from("profiles")
+                        .update({ interests: editedInterests })
+                        .eq("id", profile.id);
+                      if (!error) {
+                        setProfile({ ...profile, interests: editedInterests });
+                        setIsEditingInterests(false);
+                        toast.success("Τα ενδιαφέροντα αποθηκεύτηκαν!");
+                      } else {
+                        toast.error("Σφάλμα αποθήκευσης");
+                      }
+                    }}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Check className="w-4 h-4 mr-1" />
+                    Αποθήκευση
+                  </Button>
+                </div>
+              </div>
             </div>
-          </Card>
-        )}
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {profile.interests && profile.interests.length > 0 ? (
+                profile.interests.map((interest: string) => (
+                  <Badge
+                    key={interest}
+                    className="px-4 py-2 rounded-full bg-gradient-to-br from-[#FDF7F9] to-[#F5E8F0] border-2 border-[#F3DCE5] text-foreground font-medium shadow-sm hover:shadow-md transition-all"
+                  >
+                    {interest}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Πρόσθεσε ενδιαφέροντα...</p>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Open Chat Button (for other profiles with mutual match) */}
         {!isOwnProfile && hasMatch && (
