@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import QuestionReactions from "@/components/QuestionReactions";
 
 const CATEGORIES = [
   { value: 'breastfeeding', label: 'Θηλασμός' },
@@ -618,24 +619,10 @@ export default function AskMoms() {
                 )}
               </div>
 
+              {/* Question Reactions */}
+              <QuestionReactions questionId={question.id} />
+
               <div className="flex items-center gap-4 pt-3 border-t">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleLikeQuestion(question.id)}
-                  className="gap-2 relative"
-                >
-                  <Heart 
-                    className={`w-4 h-4 transition-all ${
-                      likedQuestions.has(question.id) ? 'fill-primary text-primary scale-110' : ''
-                    }`}
-                  />
-                  <span>{question.likes_count}</span>
-                  {animatingHeart === question.id && (
-                    <Heart className="w-4 h-4 fill-primary text-primary absolute animate-ping" />
-                  )}
-                </Button>
-                
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button

@@ -263,13 +263,19 @@ export function useMatching() {
       console.log("After filtering swiped/matched:", profilesWithScores.length);
 
       // Filter out profiles with empty interests or children arrays (but keep if they have photo)
+      const beforeBasicFilter = profilesWithScores.length;
       profilesWithScores = profilesWithScores.filter(profile => {
         const hasInterests = profile.interests && Array.isArray(profile.interests) && profile.interests.length > 0;
         const hasChildren = profile.children && Array.isArray(profile.children) && (profile.children as any[]).length > 0;
         const hasPhoto = profile.profile_photo_url || (profile.profile_photos_urls && profile.profile_photos_urls.length > 0);
         // Must have photo and at least one of interests/children
-        return hasPhoto && (hasInterests || hasChildren);
+        const passes = hasPhoto && (hasInterests || hasChildren);
+        if (!passes) {
+          console.log("Profile filtered out:", profile.full_name, { hasPhoto, hasInterests, hasChildren });
+        }
+        return passes;
       });
+      console.log(`Basic filter: ${beforeBasicFilter} -> ${profilesWithScores.length} profiles`);
 
       // PROFILE-BASED LOCATION MATCHING (NO GPS!)
       // Calculate location boost based on declared city/area only
