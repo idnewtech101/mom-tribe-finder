@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Heart, MapPin, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -375,43 +374,42 @@ const MagicMatching = () => {
         </CardContent>
       </Card>
 
-      {/* No Moms Dialog */}
-      <Dialog open={showNoMomsDialog} onOpenChange={setShowNoMomsDialog}>
-        <DialogContent className="rounded-[28px] max-w-sm bg-gradient-to-br from-[#FDF7F9] to-[#F5E8F0] border-2 border-[#F3DCE5]">
-          <button 
-            onClick={() => setShowNoMomsDialog(false)}
-            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          
-          <DialogHeader>
-            <DialogTitle className="text-center pt-4" style={{ fontFamily: "'Pacifico', cursive" }}>
-              {language === "el" 
-                ? "Δεν βρέθηκε τέλεια μαμά... ακόμα! 🌸"
-                : "No perfect match found... yet! 🌸"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="text-center space-y-4 py-6">
-            <div className="text-6xl">💫</div>
-            <p className="text-sm text-muted-foreground">
-              {language === "el" 
-                ? "Δεν βρέθηκε μαμά που να ταιριάζει πάνω από 90%. Προσπάθησε ξανά αύριο!"
-                : "No mom matching over 90% found. Try again tomorrow!"}
-            </p>
-            <Button 
-              onClick={() => {
-                setShowNoMomsDialog(false);
-                navigate("/profile-setup");
-              }}
-              variant="outline"
-              className="rounded-full"
+      {/* No Moms Inline Message (replaces popup) */}
+      {showNoMomsDialog && (
+        <Card className="mt-4 p-4 bg-gradient-to-br from-pink-50 via-white to-purple-50/50 border-pink-200/50">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💫</span>
+            <div className="flex-1">
+              <p className="font-medium text-foreground mb-1" style={{ fontFamily: "'Pacifico', cursive" }}>
+                {language === "el" 
+                  ? "Δεν βρέθηκε τέλεια μαμά... ακόμα!"
+                  : "No perfect match found... yet!"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {language === "el" 
+                  ? "Προσπάθησε ξανά αργότερα ή δες τις Προτεινόμενες μαμάδες 🌸"
+                  : "Try again later or check out the Recommended moms 🌸"}
+              </p>
+              <Button 
+                onClick={() => {
+                  setShowNoMomsDialog(false);
+                  navigate("/discover");
+                }}
+                variant="link"
+                className="p-0 h-auto text-primary mt-2"
+              >
+                {language === "el" ? "→ Δες όλες τις μαμάδες" : "→ See all moms"}
+              </Button>
+            </div>
+            <button 
+              onClick={() => setShowNoMomsDialog(false)}
+              className="text-muted-foreground hover:text-foreground"
             >
-              {language === "el" ? "Επεξεργασία Προφίλ" : "Edit Profile"}
-            </Button>
+              <X className="w-4 h-4" />
+            </button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </Card>
+      )}
     </>
   );
 };

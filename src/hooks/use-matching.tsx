@@ -189,13 +189,16 @@ export function useMatching() {
       };
       setFilters(userFilters);
 
-      // Get profiles - exclude current user AND admin profiles
+      // Get profiles - exclude current user AND admin profiles AND test profiles
       // Admin profile ID to always exclude
       const ADMIN_PROFILE_ID = 'fb6eac18-8940-4f14-9cc7-8d828c21179a';
       
+      // Test account profile ID (Google reviewer)
+      const TEST_ACCOUNT_ID = '00000000-0000-0000-0000-000000000000'; // Placeholder - will be filtered by email pattern
+      
       let profilesQuery = supabase
         .from("profiles")
-        .select("id, full_name, profile_photo_url, profile_photos_urls, bio, city, area, interests, children, latitude, longitude")
+        .select("id, full_name, email, profile_photo_url, profile_photos_urls, bio, city, area, interests, children, latitude, longitude")
         .neq("id", user.id)
         .neq("id", ADMIN_PROFILE_ID) // Never show admin/Momster profile
         .eq("profile_completed", true);
@@ -205,6 +208,28 @@ export function useMatching() {
       const { data: allProfiles, error: profilesError } = await profilesQuery;
 
       if (profilesError) throw profilesError;
+      
+      // Filter out test/demo/review profiles
+      const filteredFromTestProfiles = (allProfiles || []).filter(profile => {
+        const lowerName = (profile.full_name || '').toLowerCase();
+        const lowerEmail = ((profile as any).email || '').toLowerCase();
+        
+        // Exclude by name pattern
+        if (lowerName.includes('test') || lowerName.includes('demo') || lowerName.includes('review')) {
+          console.log("Excluding test profile by name:", profile.full_name);
+          return false;
+        }
+        
+        // Exclude by email pattern
+        if (lowerEmail.includes('test') || lowerEmail.includes('demo') || lowerEmail.includes('reviewer')) {
+          console.log("Excluding test profile by email:", profile.full_name);
+          return false;
+        }
+        
+        return true;
+      });
+      
+      console.log("Profiles after test filter:", filteredFromTestProfiles.length, "from", allProfiles?.length);
 
       // Get users who have already swiped "yes" on current user (they liked you!)
       const { data: usersWhoLikedYou, error: likesError } = await supabase
@@ -250,10 +275,10 @@ export function useMatching() {
       );
       console.log("Already matched with:", matchedUserIds.size);
 
-      console.log("Loaded profiles count:", allProfiles?.length || 0);
+      console.log("Loaded profiles count:", filteredFromTestProfiles.length);
 
       // Filter out already swiped and already matched users
-      let profilesWithScores: ProfileMatch[] = (allProfiles || [])
+      let profilesWithScores: ProfileMatch[] = filteredFromTestProfiles
         .filter(profile => !alreadySwipedIds.has(profile.id) && !matchedUserIds.has(profile.id))
         .map(profile => ({
           ...profile,

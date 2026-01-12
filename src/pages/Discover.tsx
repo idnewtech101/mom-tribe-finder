@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, X, MapPin, User, Settings, Percent, Navigation } from "lucide-react";
+import { Heart, X, MapPin, User, Settings, Percent, Navigation, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import mascot from "@/assets/mascot.jpg";
@@ -22,27 +22,12 @@ import { useMicrocopy } from "@/hooks/use-microcopy";
 import { MomCardInfo, MomCardMicroText, MomCardBio } from "@/components/MomCard";
 import DiscoverEmptyState from "@/components/DiscoverEmptyState";
 
-// Demo profile for testing UI
-const demoProfile: ProfileMatch = {
-  id: 'demo-123',
-  full_name: 'Maria Papadopoulou',
-  profile_photo_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-  profile_photos_urls: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400'],
-  city: 'Αθήνα',
-  area: 'Κολωνάκι',
-  bio: 'Μαμά ενός υπέροχου αγοριού 2 ετών! Λατρεύω τις βόλτες στο πάρκο και τις playdates. Ψάχνω για άλλες μαμάδες να μοιραστούμε εμπειρίες! 🌸',
-  interests: ['Παιδική Ψυχολογία', 'Μαγείρεμα', 'Yoga', 'Ανάγνωση'],
-  children: [{ name: 'Νίκος', ageGroup: '2-3 χρονών', gender: 'boy' }],
-  distance: 3.5,
-  latitude: null,
-  longitude: null,
-  matchPercentage: 85,
-  commonInterestsCount: 3,
-  totalInterests: 5,
-  isSameCity: true,
-  isSameArea: false,
-  locationBoost: 1
-};
+// Demo/test profile IDs to exclude from the feed
+const TEST_PROFILE_IDS = [
+  'demo-123',
+  'test-',
+  'review-',
+];
 
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -223,18 +208,35 @@ export default function Discover() {
     }
   };
 
-  // Filter out current user and add demo profile
-  const filteredProfiles = profiles.filter(profile => profile.id !== currentUserId);
+  // Filter out current user and test/demo profiles
+  const filteredProfiles = profiles.filter(profile => {
+    // Exclude current user
+    if (profile.id === currentUserId) return false;
+    // Exclude test/demo profiles by ID pattern
+    if (TEST_PROFILE_IDS.some(testId => profile.id.toLowerCase().includes(testId))) return false;
+    // Exclude profiles with test/demo/review in their name (case insensitive)
+    const lowerName = (profile.full_name || '').toLowerCase();
+    if (lowerName.includes('test') || lowerName.includes('demo') || lowerName.includes('review')) return false;
+    return true;
+  });
   
   // Debug log to track filtering
   console.log("Discover profiles:", {
     totalFromHook: profiles.length,
-    afterCurrentUserFilter: filteredProfiles.length,
+    afterFiltering: filteredProfiles.length,
     currentUserId: currentUserId || 'not set yet'
   });
   
-  const allProfiles = [demoProfile, ...filteredProfiles];
-  const currentProfile = allProfiles[currentIndex];
+  const currentProfile = filteredProfiles[currentIndex];
+
+  // Pull to refresh handler
+  const handlePullToRefresh = async () => {
+    console.log("Pull to refresh triggered");
+    setCurrentIndex(0);
+    setReachedEndOfProfiles(false);
+    await reloadProfiles();
+    toast.success("Η λίστα ανανεώθηκε! 🌸");
+  };
 
   const handleSwipe = async (liked: boolean) => {
     console.log(liked ? "Liked!" : "Passed");
@@ -288,7 +290,7 @@ export default function Discover() {
       }
     }
     
-    if (nextIndex >= allProfiles.length) {
+    if (nextIndex >= filteredProfiles.length) {
       setReachedEndOfProfiles(true);
     } else {
       setCurrentIndex(nextIndex);
@@ -360,13 +362,13 @@ export default function Discover() {
   };
 
   useEffect(() => {
-    if (!loading && allProfiles.length === 1) {
+    if (!loading && filteredProfiles.length === 0) {
       showEmptyDiscover();
     }
-  }, [allProfiles.length, loading, showEmptyDiscover]);
+  }, [filteredProfiles.length, loading, showEmptyDiscover]);
 
   // Debug logging
-  // console.log("Discover render - loading:", loading, "profiles:", profiles.length, "allProfiles:", allProfiles.length, "currentIndex:", currentIndex, "currentProfile:", currentProfile?.full_name);
+  // console.log("Discover render - loading:", loading, "profiles:", profiles.length, "filteredProfiles:", filteredProfiles.length, "currentIndex:", currentIndex, "currentProfile:", currentProfile?.full_name);
 
   if (loading) {
     return (
@@ -522,6 +524,17 @@ export default function Discover() {
         onClick={() => navigate("/matching-filters")}
       >
         <Settings className="w-4 h-4" />
+      </Button>
+      
+      {/* Pull to Refresh Button */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed top-20 left-16 z-10"
+        onClick={handlePullToRefresh}
+        title="Ανανέωση λίστας"
+      >
+        <RefreshCw className="w-4 h-4" />
       </Button>
 
       <div className="max-w-md mx-auto pt-32 pb-32 space-y-4">
