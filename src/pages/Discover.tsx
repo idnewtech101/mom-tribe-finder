@@ -226,6 +226,13 @@ export default function Discover() {
   // Filter out current user and add demo profile
   const filteredProfiles = profiles.filter(profile => profile.id !== currentUserId);
   
+  // Debug log to track filtering
+  console.log("Discover profiles:", {
+    totalFromHook: profiles.length,
+    afterCurrentUserFilter: filteredProfiles.length,
+    currentUserId: currentUserId || 'not set yet'
+  });
+  
   const allProfiles = [demoProfile, ...filteredProfiles];
   const currentProfile = allProfiles[currentIndex];
 
