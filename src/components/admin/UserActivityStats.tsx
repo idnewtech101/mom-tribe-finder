@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Table, 
   TableBody, 
@@ -16,10 +18,16 @@ import {
   TrendingUp, 
   Users, 
   Calendar,
-  Zap
+  Zap,
+  Mail,
+  RefreshCw,
+  CheckCircle2,
+  X
 } from "lucide-react";
-import { formatDistanceToNow, differenceInDays, differenceInHours, format } from "date-fns";
+import { formatDistanceToNow, differenceInDays, differenceInHours, format, subDays } from "date-fns";
 import { el } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 
 interface UserActivity {
   user_id: string;
@@ -31,6 +39,13 @@ interface UserActivity {
   created_at: string;
 }
 
+interface DailyStats {
+  date: string;
+  displayDate: string;
+  activeUsers: number;
+  newUsers: number;
+}
+
 interface ActivityStats {
   totalActiveUsers: number;
   activeToday: number;
@@ -40,6 +55,7 @@ interface ActivityStats {
   mostActiveUsers: UserActivity[];
   recentlyActive: UserActivity[];
   inactiveUsers: UserActivity[];
+  dailyStats: DailyStats[];
 }
 
 export default function UserActivityStats() {
@@ -51,9 +67,13 @@ export default function UserActivityStats() {
     averageSessionsPerUser: 0,
     mostActiveUsers: [],
     recentlyActive: [],
-    inactiveUsers: []
+    inactiveUsers: [],
+    dailyStats: []
   });
   const [loading, setLoading] = useState(true);
+  const [sendingEmails, setSendingEmails] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchActivityStats();
@@ -120,6 +140,29 @@ export default function UserActivityStats() {
         differenceInDays(now, new Date(a.last_activity_at)) > 14
       );
 
+      // Calculate daily stats for the last 14 days
+      const dailyStats: DailyStats[] = [];
+      for (let i = 13; i >= 0; i--) {
+        const date = subDays(now, i);
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const displayDate = format(date, 'dd/MM', { locale: el });
+        
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+        
+        const activeUsers = enrichedActivity.filter(a => {
+          const lastActivity = new Date(a.last_activity_at);
+          return lastActivity >= dayStart && lastActivity < dayEnd;
+        }).length;
+
+        const newUsers = (profilesData || []).filter(p => {
+          const createdAt = new Date(p.created_at);
+          return createdAt >= dayStart && createdAt < dayEnd;
+        }).length;
+
+        dailyStats.push({ date: dateStr, displayDate, activeUsers, newUsers });
+      }
+
       setStats({
         totalActiveUsers: enrichedActivity.length,
         activeToday,
@@ -130,7 +173,8 @@ export default function UserActivityStats() {
           : 0,
         mostActiveUsers: enrichedActivity.slice(0, 10),
         recentlyActive: enrichedActivity.slice(0, 20),
-        inactiveUsers: inactiveUsers.slice(0, 20)
+        inactiveUsers: inactiveUsers.slice(0, 50),
+        dailyStats
       });
     } catch (error) {
       console.error("Error fetching activity stats:", error);
@@ -159,6 +203,82 @@ export default function UserActivityStats() {
       return <Badge variant="outline">Αυτό το μήνα</Badge>;
     } else {
       return <Badge variant="destructive">Ανενεργή</Badge>;
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    setSelectedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedUsers.size === stats.inactiveUsers.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(stats.inactiveUsers.map(u => u.user_id)));
+    }
+  };
+
+  const handleSendReengagementEmails = async () => {
+    if (selectedUsers.size === 0) {
+      toast({
+        title: "Δεν επιλέχθηκαν χρήστες",
+        description: "Επιλέξτε τουλάχιστον έναν χρήστη",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSendingEmails(true);
+    try {
+      // Get selected users' data
+      const usersToEmail = stats.inactiveUsers.filter(u => selectedUsers.has(u.user_id));
+      
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const user of usersToEmail) {
+        try {
+          const { error } = await supabase.functions.invoke('send-reengagement-email', {
+            body: {
+              userId: user.user_id,
+              email: user.email,
+              fullName: user.full_name,
+              language: 'el'
+            }
+          });
+
+          if (error) throw error;
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to send email to ${user.email}:`, err);
+          failCount++;
+        }
+      }
+
+      toast({
+        title: "Αποστολή ολοκληρώθηκε",
+        description: `Επιτυχία: ${successCount}, Αποτυχία: ${failCount}`,
+        variant: successCount > 0 ? "default" : "destructive"
+      });
+
+      setSelectedUsers(new Set());
+    } catch (error) {
+      console.error("Error sending re-engagement emails:", error);
+      toast({
+        title: "Σφάλμα",
+        description: "Αποτυχία αποστολής emails",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingEmails(false);
     }
   };
 
@@ -227,6 +347,56 @@ export default function UserActivityStats() {
         </Card>
       </div>
 
+      {/* Activity Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Δραστηριότητα Τελευταίων 14 Ημερών
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.dailyStats}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis 
+                  dataKey="displayDate" 
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ fontWeight: 'bold' }}
+                />
+                <Legend />
+                <Bar 
+                  dataKey="activeUsers" 
+                  name="Ενεργοί Χρήστες" 
+                  fill="hsl(var(--primary))" 
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="newUsers" 
+                  name="Νέοι Χρήστες" 
+                  fill="hsl(142 76% 36%)" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Recently Active Users Table */}
       <Card>
         <CardHeader>
@@ -278,19 +448,59 @@ export default function UserActivityStats() {
         </CardContent>
       </Card>
 
-      {/* Inactive Users */}
+      {/* Inactive Users with Re-engagement */}
       {stats.inactiveUsers.length > 0 && (
         <Card className="border-orange-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-600">
-              <Clock className="w-5 h-5" />
-              Ανενεργές Χρήστες ({">"}14 μέρες)
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <CardTitle className="flex items-center gap-2 text-orange-600">
+                <Clock className="w-5 h-5" />
+                Ανενεργές Χρήστες ({">"}14 μέρες) - {stats.inactiveUsers.length} χρήστες
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSelectAll}
+                >
+                  {selectedUsers.size === stats.inactiveUsers.length ? (
+                    <>
+                      <X className="w-4 h-4 mr-1" />
+                      Αποεπιλογή όλων
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-1" />
+                      Επιλογή όλων
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSendReengagementEmails}
+                  disabled={sendingEmails || selectedUsers.size === 0}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  {sendingEmails ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                      Αποστολή...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-1" />
+                      Αποστολή Re-engagement ({selectedUsers.size})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10"></TableHead>
                   <TableHead>Χρήστης</TableHead>
                   <TableHead>Τελευταία Είσοδος</TableHead>
                   <TableHead>Μέρες Απουσίας</TableHead>
@@ -299,6 +509,12 @@ export default function UserActivityStats() {
               <TableBody>
                 {stats.inactiveUsers.map((user) => (
                   <TableRow key={user.user_id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedUsers.has(user.user_id)}
+                        onCheckedChange={() => handleSelectUser(user.user_id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">{user.full_name}</p>
