@@ -9,8 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { 
   Ban, Search, MapPin, Calendar, Heart, AlertTriangle, ExternalLink, 
-  Eye, Edit, Trash2, Save, X, User, Mail, Phone, Baby
+  Eye, Edit, Trash2, Save, X, User, Mail, Phone, Baby, Clock, 
+  Filter, Activity, TrendingUp
 } from "lucide-react";
+import { formatDistanceToNow, differenceInDays, differenceInHours } from "date-fns";
+import { el } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -59,6 +62,16 @@ interface Profile {
   profile_photos_urls: string[] | null;
   match_preference: string | null;
   mom_badge: string | null;
+  // Activity data
+  last_activity_at?: string | null;
+  first_login_date?: string | null;
+  // Filter settings
+  match_age_filter?: boolean | null;
+  match_interests_filter?: boolean | null;
+  show_location_filter?: boolean | null;
+  distance_preference_km?: number | null;
+  interests_threshold?: number | null;
+  required_interests?: string[] | null;
 }
 
 export default function UserManagement() {
@@ -95,13 +108,29 @@ export default function UserManagement() {
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: profilesData, error } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setProfiles(data || []);
+
+      // Fetch activity data for all users
+      const userIds = profilesData?.map(p => p.id) || [];
+      const { data: activityData } = await supabase
+        .from("user_activity")
+        .select("user_id, last_activity_at")
+        .in("user_id", userIds);
+
+      const activityMap = new Map(activityData?.map(a => [a.user_id, a.last_activity_at]) || []);
+
+      // Merge activity data into profiles
+      const enrichedProfiles = (profilesData || []).map(profile => ({
+        ...profile,
+        last_activity_at: activityMap.get(profile.id) || null
+      }));
+
+      setProfiles(enrichedProfiles);
     } catch (error) {
       console.error("Error fetching profiles:", error);
       toast({
@@ -476,6 +505,46 @@ export default function UserManagement() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Activity Info Row */}
+              <div className="flex items-center gap-4 p-2 bg-secondary/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    Τελευταία είσοδος:{" "}
+                    {profile.last_activity_at ? (
+                      <span className="font-medium">
+                        {formatDistanceToNow(new Date(profile.last_activity_at), { 
+                          addSuffix: true, 
+                          locale: el 
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </span>
+                </div>
+                {profile.last_activity_at && (
+                  <Badge variant={
+                    differenceInHours(new Date(), new Date(profile.last_activity_at)) < 24 
+                      ? "default" 
+                      : differenceInDays(new Date(), new Date(profile.last_activity_at)) < 7 
+                        ? "secondary" 
+                        : "destructive"
+                  } className="text-xs">
+                    {differenceInHours(new Date(), new Date(profile.last_activity_at)) < 1 
+                      ? "🟢 Online" 
+                      : differenceInHours(new Date(), new Date(profile.last_activity_at)) < 24 
+                        ? "🟢 Σήμερα"
+                        : differenceInDays(new Date(), new Date(profile.last_activity_at)) < 7 
+                          ? "🟡 Αυτή τη βδομάδα"
+                          : differenceInDays(new Date(), new Date(profile.last_activity_at)) < 30 
+                            ? "🟠 Αυτό το μήνα"
+                            : "🔴 Ανενεργή"
+                    }
+                  </Badge>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Baby className="w-4 h-4 text-muted-foreground" />
@@ -493,6 +562,31 @@ export default function UserManagement() {
                   <span className="text-muted-foreground">ID: </span>
                   <span className="font-mono text-xs">{profile.id.slice(0, 8)}...</span>
                 </div>
+              </div>
+
+              {/* Filters Info */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground mr-2">Φίλτρα:</span>
+                {profile.match_age_filter && (
+                  <Badge variant="outline" className="text-xs">Ηλικία παιδιών</Badge>
+                )}
+                {profile.match_interests_filter && (
+                  <Badge variant="outline" className="text-xs">Ενδιαφέροντα</Badge>
+                )}
+                {profile.show_location_filter && (
+                  <Badge variant="outline" className="text-xs">
+                    Τοποθεσία {profile.distance_preference_km ? `(${profile.distance_preference_km}km)` : ""}
+                  </Badge>
+                )}
+                {profile.interests_threshold && profile.interests_threshold > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    Min {profile.interests_threshold} κοινά
+                  </Badge>
+                )}
+                {!profile.match_age_filter && !profile.match_interests_filter && !profile.show_location_filter && (
+                  <span className="text-xs text-muted-foreground">Κανένα ενεργό</span>
+                )}
               </div>
 
               {profile.interests && profile.interests.length > 0 && (
@@ -611,6 +705,61 @@ export default function UserManagement() {
                 <div>
                   <Label className="text-muted-foreground">Τελευταία Ενημέρωση</Label>
                   <p>{viewingProfile.updated_at ? new Date(viewingProfile.updated_at).toLocaleString("el-GR") : "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Τελευταία Είσοδος</Label>
+                  <p className="flex items-center gap-2">
+                    {viewingProfile.last_activity_at ? (
+                      <>
+                        {formatDistanceToNow(new Date(viewingProfile.last_activity_at), { 
+                          addSuffix: true, 
+                          locale: el 
+                        })}
+                        <Badge variant={
+                          differenceInDays(new Date(), new Date(viewingProfile.last_activity_at)) < 7 
+                            ? "default" 
+                            : "destructive"
+                        } className="text-xs">
+                          {differenceInDays(new Date(), new Date(viewingProfile.last_activity_at))} μέρες
+                        </Badge>
+                      </>
+                    ) : "—"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Πρώτη Σύνδεση</Label>
+                  <p>{viewingProfile.first_login_date ? new Date(viewingProfile.first_login_date).toLocaleString("el-GR") : "—"}</p>
+                </div>
+              </div>
+
+              {/* Filter Settings */}
+              <div>
+                <Label className="text-muted-foreground">Ενεργά Φίλτρα Αναζήτησης</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {viewingProfile.match_age_filter && (
+                    <Badge variant="secondary">📅 Ηλικία Παιδιών</Badge>
+                  )}
+                  {viewingProfile.match_interests_filter && (
+                    <Badge variant="secondary">💜 Ενδιαφέροντα</Badge>
+                  )}
+                  {viewingProfile.show_location_filter && (
+                    <Badge variant="secondary">
+                      📍 Τοποθεσία ({viewingProfile.distance_preference_km || 50}km)
+                    </Badge>
+                  )}
+                  {viewingProfile.interests_threshold && viewingProfile.interests_threshold > 0 && (
+                    <Badge variant="secondary">
+                      Min {viewingProfile.interests_threshold} κοινά ενδιαφέροντα
+                    </Badge>
+                  )}
+                  {viewingProfile.required_interests && viewingProfile.required_interests.length > 0 && (
+                    <Badge variant="secondary">
+                      Απαιτούμενα: {viewingProfile.required_interests.join(", ")}
+                    </Badge>
+                  )}
+                  {!viewingProfile.match_age_filter && !viewingProfile.match_interests_filter && !viewingProfile.show_location_filter && (
+                    <span className="text-sm text-muted-foreground">Κανένα φίλτρο ενεργό</span>
+                  )}
                 </div>
               </div>
 

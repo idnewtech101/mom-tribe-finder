@@ -17,9 +17,67 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Checking for inactive users...");
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const body = await req.json().catch(() => ({}));
+
+    // Check if this is a single user request from admin panel
+    if (body.userId && body.email && body.fullName) {
+      console.log(`Sending single re-engagement email to ${body.email}`);
+
+      // Fetch email template
+      const { data: template, error: templateError } = await supabase
+        .from("email_templates")
+        .select("*")
+        .eq("template_key", "reengagement")
+        .single();
+
+      if (templateError || !template) {
+        console.error("Error fetching email template:", templateError);
+        throw new Error("Email template not found");
+      }
+
+      // Use language from request or default to Greek
+      const lang = body.language || 'el';
+      const subject = lang === 'el' ? template.subject_el : template.subject_en;
+      const bodyText = (lang === 'el' ? template.body_el : template.body_en)
+        .replace(/{user_name}/g, body.fullName);
+
+      // Send email
+      const emailResponse = await resend.emails.send({
+        from: "Momster <hello@momster.gr>",
+        to: [body.email],
+        subject: subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #FFE5EC 0%, #FFF5F7 100%); padding: 30px; border-radius: 15px;">
+              <h1 style="color: #FF69B4; text-align: center; margin-bottom: 20px;">🌸 Momster 🌸</h1>
+              <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">
+                ${bodyText}
+              </div>
+            </div>
+          </div>
+        `,
+      });
+
+      console.log(`Re-engagement email sent to ${body.email}:`, emailResponse);
+
+      // Update email_sent_at in user_activity
+      await supabase
+        .from("user_activity")
+        .update({ email_sent_at: new Date().toISOString() })
+        .eq("user_id", body.userId);
+
+      return new Response(
+        JSON.stringify({ success: true, email: body.email }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Original batch processing logic for cron job
+    console.log("Checking for inactive users...");
 
     // Find users inactive for 7+ days who haven't received a re-engagement email
     const sevenDaysAgo = new Date();
@@ -74,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Use Greek by default (can be extended to check user preferences)
       const subject = template.subject_el;
-      const body = template.body_el.replace(/{user_name}/g, profile.full_name);
+      const bodyText = template.body_el.replace(/{user_name}/g, profile.full_name);
 
       // Send email
       try {
@@ -87,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="background: linear-gradient(135deg, #FFE5EC 0%, #FFF5F7 100%); padding: 30px; border-radius: 15px;">
                 <h1 style="color: #FF69B4; text-align: center; margin-bottom: 20px;">🌸 Momster 🌸</h1>
                 <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">
-                  ${body}
+                  ${bodyText}
                 </div>
               </div>
             </div>
