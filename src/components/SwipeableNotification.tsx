@@ -26,16 +26,18 @@ export default function SwipeableNotification({
 }: SwipeableNotificationProps) {
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const startX = useRef(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isDeleting) return;
     startX.current = e.touches[0].clientX;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || isDeleting) return;
     const currentX = e.touches[0].clientX;
     const diff = currentX - startX.current;
     // Only allow left swipe (negative values)
@@ -47,12 +49,15 @@ export default function SwipeableNotification({
   const handleTouchEnd = () => {
     setIsDragging(false);
     if (translateX < -60) {
-      // Delete if swiped more than 60px
-      setTranslateX(-100);
-      setTimeout(() => onDelete(notification.id), 150);
+      triggerDelete();
     } else {
       setTranslateX(0);
     }
+  };
+
+  const triggerDelete = () => {
+    setIsDeleting(true);
+    setTimeout(() => onDelete(notification.id), 300);
   };
 
   const getIcon = (type: string) => {
@@ -71,7 +76,16 @@ export default function SwipeableNotification({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div 
+      className={`relative overflow-hidden rounded-lg transition-all duration-300 ${
+        isDeleting ? "opacity-0 scale-95 -translate-x-4 h-0 mb-0" : "opacity-100 scale-100 h-auto"
+      }`}
+      style={{ 
+        maxHeight: isDeleting ? 0 : 200,
+        marginBottom: isDeleting ? 0 : undefined,
+        transitionProperty: "opacity, transform, max-height, margin"
+      }}
+    >
       {/* Delete background */}
       <div className="absolute inset-y-0 right-0 w-24 bg-destructive flex items-center justify-center rounded-r-lg">
         <Trash2 className="w-5 h-5 text-destructive-foreground" />
@@ -131,7 +145,7 @@ export default function SwipeableNotification({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onDelete(notification.id)}
+                  onClick={triggerDelete}
                   className="h-7 px-2 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="w-3 h-3" />
