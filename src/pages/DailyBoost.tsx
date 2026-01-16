@@ -9,6 +9,9 @@ import { Link } from "react-router-dom";
 import mascot from "@/assets/mascot.jpg";
 import ThisOrThat from "@/components/ThisOrThat";
 import MagicMatching from "@/components/MagicMatching";
+import SilentHug from "@/components/SilentHug";
+import NightMode from "@/components/NightMode";
+import { useNightMode } from "@/hooks/use-night-mode";
 import { supabase } from "@/integrations/supabase/client";
 
 const MOODS = [
@@ -172,6 +175,7 @@ export default function DailyBoost() {
   const [currentMoodQuoteIndex, setCurrentMoodQuoteIndex] = useState(0);
   const { mascotConfig, visible, showMascot, hideMascot } = useMascot();
   const [showHearts, setShowHearts] = useState(false);
+  const { isNightTime } = useNightMode();
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -280,11 +284,20 @@ export default function DailyBoost() {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-32 px-4 relative overflow-y-auto" style={{ background: 'linear-gradient(135deg, #F8E9EE, #F5E8F0, #F8E9EE)' }}>
-      {/* Animated Mascot */}
-      <div className="fixed top-20 right-4 z-30 animate-bounce">
-        <img src={mascot} alt="Momster Mascot" className="w-20 h-20 object-contain" />
-      </div>
+    <div 
+      className="min-h-screen pt-20 pb-32 px-4 relative overflow-y-auto transition-all duration-500" 
+      style={{ 
+        background: isNightTime 
+          ? 'linear-gradient(135deg, #1F1D2B, #2D2B3D, #1F1D2B)' 
+          : 'linear-gradient(135deg, #F8E9EE, #F5E8F0, #F8E9EE)' 
+      }}
+    >
+      {/* Animated Mascot - hide in night mode */}
+      {!isNightTime && (
+        <div className="fixed top-20 right-4 z-30 animate-bounce">
+          <img src={mascot} alt="Momster Mascot" className="w-20 h-20 object-contain" />
+        </div>
+      )}
       
       {showHearts && (
         <div className="fixed inset-0 pointer-events-none z-40">
@@ -307,15 +320,31 @@ export default function DailyBoost() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Welcome Header */}
         <div className="text-center space-y-2 mb-8">
-          <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2" style={{ fontFamily: "'Pacifico', cursive" }}>
-            Hi {profile?.username || profile?.full_name || 'Username'} 🌸
+          <h1 className={`text-3xl font-bold flex items-center justify-center gap-2 ${isNightTime ? 'text-white' : 'text-foreground'}`} style={{ fontFamily: "'Pacifico', cursive" }}>
+            {isNightTime ? '🌙' : ''} Hi {profile?.username || profile?.full_name || 'Username'} {isNightTime ? '' : '🌸'}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {language === 'el' ? 'Η καθημερινή σου δόση ενέργειας' : 'Your daily dose of energy'}
+          <p className={`text-sm ${isNightTime ? 'text-gray-300' : 'text-muted-foreground'}`}>
+            {isNightTime 
+              ? (language === 'el' ? 'Δεν είσαι μόνη απόψε' : "You're not alone tonight")
+              : (language === 'el' ? 'Η καθημερινή σου δόση ενέργειας' : 'Your daily dose of energy')
+            }
           </p>
         </div>
 
-        {/* Quote of the Day - Full width */}
+        {/* Night Mode Section - Only show between 00:00-05:00 */}
+        {isNightTime && (
+          <div className="max-w-5xl mx-auto mb-6">
+            <NightMode language={language} />
+          </div>
+        )}
+
+        {/* Silent Hug Feature - Always visible but styled differently at night */}
+        <div className="max-w-5xl mx-auto mb-6">
+          <SilentHug language={language} />
+        </div>
+
+        {/* Quote of the Day - Full width (hide in night mode) */}
+        {!isNightTime && (
         <div className="max-w-5xl mx-auto">
           <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-[#F3DCE5] overflow-hidden relative hover:shadow-xl transition-all rounded-[30px]">
             <div className="flex items-start gap-4">
@@ -331,8 +360,10 @@ export default function DailyBoost() {
             </div>
           </Card>
         </div>
+        )}
 
-        {/* How Are You Feeling Today? - Full width */}
+        {/* How Are You Feeling Today? - Full width (hide in night mode) */}
+        {!isNightTime && (
         <div className="max-w-5xl mx-auto">
           <Card className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-[#F3DCE5] overflow-hidden relative hover:shadow-xl transition-all rounded-[30px]">
             <h3 className="text-xl font-bold text-orange-700 mb-4 text-center">
@@ -371,8 +402,10 @@ export default function DailyBoost() {
             />
           </Card>
         </div>
+        )}
 
-        {/* 2x2 Grid Layout with generous spacing */}
+        {/* 2x2 Grid Layout with generous spacing (hide in night mode) */}
+        {!isNightTime && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Magic Matching - FIRST */}
           <MagicMatching />
@@ -432,11 +465,14 @@ export default function DailyBoost() {
             </Card>
           </Link>
         </div>
+        )}
 
-        {/* This or That - Full width below grid */}
+        {/* This or That - Full width below grid (hide in night mode) */}
+        {!isNightTime && (
         <div className="max-w-5xl mx-auto mt-8">
           <ThisOrThat />
         </div>
+        )}
       </div>
 
       {/* Mascot Modal */}
@@ -488,18 +524,27 @@ export default function DailyBoost() {
         </div>
       )}
       
-      {/* Footer with Premium Message */}
-      <footer className="fixed bottom-24 left-0 right-0 py-3 px-4 bg-[#F8E9EE]/95 backdrop-blur-md border-t border-[#F3DCE5]">
+      {/* Footer with Premium Message - styled for night mode */}
+      <footer className={`fixed bottom-24 left-0 right-0 py-3 px-4 backdrop-blur-md border-t transition-all duration-500 ${
+        isNightTime 
+          ? 'bg-[#1F1D2B]/95 border-[#3D3B4D]' 
+          : 'bg-[#F8E9EE]/95 border-[#F3DCE5]'
+      }`}>
         <div className="max-w-7xl mx-auto text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <img src={mascot} alt="Momster Mascot" className="w-8 h-8 object-contain" />
-            <span className="text-sm font-medium text-foreground">
-              {language === 'el' ? 'Μαζί, οι μαμάδες ανθίζουν!' : 'Together, moms thrive!'}
+            <span className={`text-sm font-medium ${isNightTime ? 'text-gray-200' : 'text-foreground'}`}>
+              {isNightTime 
+                ? (language === 'el' ? 'Κάποια άλλη είναι ξύπνια μαζί σου 💜' : "Someone else is awake with you 💜")
+                : (language === 'el' ? 'Μαζί, οι μαμάδες ανθίζουν!' : 'Together, moms thrive!')
+              }
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            *Momster Perks — free for now, Premium later.
-          </p>
+          {!isNightTime && (
+            <p className="text-xs text-muted-foreground">
+              *Momster Perks — free for now, Premium later.
+            </p>
+          )}
         </div>
       </footer>
     </div>
