@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useHaptic } from "@/hooks/use-haptic";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import mascot from "@/assets/mascot.jpg";
 
 interface SilentHugProps {
@@ -17,6 +18,7 @@ export default function SilentHug({ language }: SilentHugProps) {
   const [showCounter, setShowCounter] = useState(false);
   const { toast } = useToast();
   const { triggerHaptic } = useHaptic();
+  const { showNotification, permission } = usePushNotifications();
 
   useEffect(() => {
     checkActiveHugRequest();
@@ -41,6 +43,19 @@ export default function SilentHug({ language }: SilentHugProps) {
           setHugsReceived(newCount);
           if (newCount > hugsReceived) {
             triggerHaptic('light');
+            // Send push notification for each new hug received
+            if (permission === 'granted') {
+              showNotification(
+                language === 'el' ? '🫂 Αγκαλιά!' : '🫂 Hug!',
+                {
+                  body: language === 'el' 
+                    ? `${newCount} μαμάδες σε αγκαλιάζουν` 
+                    : `${newCount} moms are hugging you`,
+                  tag: `hug-${activeHugRequest.id}`,
+                  url: '/',
+                }
+              );
+            }
           }
         }
       )

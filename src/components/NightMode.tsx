@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useHaptic } from "@/hooks/use-haptic";
-import mascot from "@/assets/mascot.jpg";
+import mascotSleepy from "@/assets/mascot-sleepy.png";
 import { Moon, Baby, Sparkles } from "lucide-react";
 
 interface OnlineMom {
@@ -129,12 +129,11 @@ export default function NightMode({ language }: NightModeProps) {
           {/* Sleepy mascot */}
           <div className="relative shrink-0">
             <img
-              src={mascot}
-              alt="Momster"
-              className="w-16 h-16 object-contain opacity-90"
+              src={mascotSleepy}
+              alt="Sleepy Momster"
+              className="w-16 h-16 object-contain"
               style={{
-                filter: 'brightness(0.85) saturate(0.9)',
-                animation: 'float 4s ease-in-out infinite',
+                animation: 'float 5s ease-in-out infinite',
               }}
             />
             <Moon className="absolute -top-1 -right-1 w-5 h-5 text-yellow-300 animate-pulse" />
