@@ -1007,6 +1007,65 @@ export type Database = {
         }
         Relationships: []
       }
+      silent_hug_responses: {
+        Row: {
+          created_at: string
+          hug_request_id: string
+          id: string
+          responder_id: string
+        }
+        Insert: {
+          created_at?: string
+          hug_request_id: string
+          id?: string
+          responder_id: string
+        }
+        Update: {
+          created_at?: string
+          hug_request_id?: string
+          id?: string
+          responder_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "silent_hug_responses_hug_request_id_fkey"
+            columns: ["hug_request_id"]
+            isOneToOne: false
+            referencedRelation: "silent_hugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      silent_hugs: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          expires_at: string
+          hugs_received: number
+          id: string
+          requester_id: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          expires_at?: string
+          hugs_received?: number
+          id?: string
+          requester_id: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          expires_at?: string
+          hugs_received?: number
+          id?: string
+          requester_id?: string
+        }
+        Relationships: []
+      }
       swipes: {
         Row: {
           choice: string
