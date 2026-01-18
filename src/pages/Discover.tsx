@@ -62,6 +62,7 @@ export default function Discover() {
   const pullStartRef = useRef<{ x: number; y: number } | null>(null);
   const pullingRef = useRef(false);
   const refreshingRef = useRef(false);
+  const swipedThisSessionRef = useRef<Set<string>>(new Set());
 
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -221,7 +222,7 @@ export default function Discover() {
     }
   };
 
-  // Filter out current user and test/demo profiles
+  // Filter out current user, test/demo profiles, AND profiles swiped this session
   const filteredProfiles = profiles.filter(profile => {
     // Exclude current user
     if (profile.id === currentUserId) return false;
@@ -230,6 +231,8 @@ export default function Discover() {
     // Exclude profiles with test/demo/review in their name (case insensitive)
     const lowerName = (profile.full_name || '').toLowerCase();
     if (lowerName.includes('test') || lowerName.includes('demo') || lowerName.includes('review')) return false;
+    // Fallback: exclude profiles swiped in this session (even if DB query missed them)
+    if (swipedThisSessionRef.current.has(profile.id)) return false;
     return true;
   });
   
@@ -283,6 +286,9 @@ export default function Discover() {
     
     const { data: { user } } = await supabase.auth.getUser();
     if (user && currentProfile && currentProfile.id !== 'demo-123') {
+      // Add to local session tracking immediately (prevents re-show even if DB fails)
+      swipedThisSessionRef.current.add(currentProfile.id);
+      
       try {
         const { data, error } = await supabase.functions.invoke('check-mutual-match', {
           body: {
@@ -294,31 +300,41 @@ export default function Discover() {
 
         if (error) {
           console.error('Error checking mutual match:', error);
-        } else if (data?.mutualMatch) {
-          // Check if this is the first match ever - show confetti only for first match
-          const firstMatchShown = localStorage.getItem('first_match_confetti_shown');
-          if (!firstMatchShown) {
-            setIsFirstMatch(true);
-            setShowMatchConfetti(true);
-            localStorage.setItem('first_match_confetti_shown', 'true');
-            setShowMatchVideo(true);
-            setTimeout(() => {
-              setShowMatchVideo(false);
-              setShowMatchConfetti(false);
-              setIsFirstMatch(false);
-              showMatch(() => navigate("/chats"));
-            }, 2000);
-          } else {
-            // Subsequent matches - just show a quick heart animation
-            setShowHeartEmoji(true);
-            setTimeout(() => {
-              setShowHeartEmoji(false);
-              showMatch(() => navigate("/chats"));
-            }, 800);
+          // Still show confirmation that action was recorded locally
+          toast.success(liked ? "Αποθηκεύτηκε! 💕" : "Πέρασε! 🌸", { duration: 1500 });
+        } else {
+          // Show swipe confirmation toast
+          if (!data?.mutualMatch) {
+            toast.success(liked ? "Αποθηκεύτηκε! 💕" : "Πέρασε! 🌸", { duration: 1500 });
+          }
+          
+          if (data?.mutualMatch) {
+            // Check if this is the first match ever - show confetti only for first match
+            const firstMatchShown = localStorage.getItem('first_match_confetti_shown');
+            if (!firstMatchShown) {
+              setIsFirstMatch(true);
+              setShowMatchConfetti(true);
+              localStorage.setItem('first_match_confetti_shown', 'true');
+              setShowMatchVideo(true);
+              setTimeout(() => {
+                setShowMatchVideo(false);
+                setShowMatchConfetti(false);
+                setIsFirstMatch(false);
+                showMatch(() => navigate("/chats"));
+              }, 2000);
+            } else {
+              // Subsequent matches - just show a quick heart animation
+              setShowHeartEmoji(true);
+              setTimeout(() => {
+                setShowHeartEmoji(false);
+                showMatch(() => navigate("/chats"));
+              }, 800);
+            }
           }
         }
       } catch (error) {
         console.error('Error in handleSwipe:', error);
+        toast.success(liked ? "Αποθηκεύτηκε! 💕" : "Πέρασε! 🌸", { duration: 1500 });
       }
     }
     

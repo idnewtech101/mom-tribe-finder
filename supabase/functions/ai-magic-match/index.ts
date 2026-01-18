@@ -13,9 +13,10 @@ interface ProfileData {
   area: string;
   interests: string[] | null;
   child_age_group?: string;
-  children?: { age: string; gender: string; name?: string }[];
+  children?: { age?: string; ageGroup?: string; gender?: string; name?: string }[];
   bio?: string;
   last_seen_at?: string;
+  marital_status?: string;
 }
 
 serve(async (req) => {
@@ -42,56 +43,93 @@ serve(async (req) => {
       );
     }
 
-    // Build the prompt for AI analysis
+    // Build the prompt for AI analysis with detailed profile comparison
+    type ChildData = { age?: string; ageGroup?: string; gender?: string; name?: string };
+    const currentChildren: ChildData[] = currentProfile.children || [];
+    const currentInterests: string[] = currentProfile.interests || [];
+    const currentMaritalStatus = currentProfile.marital_status || '';
+    const currentChildAges = currentChildren.map((c: ChildData) => c.ageGroup || c.age).filter(Boolean);
+    
     const systemPrompt = `You are a friendly matchmaking assistant for a mom community app called Momster. 
-Your job is to analyze mom profiles and find the BEST available match based on life stage, mood, and compatibility.
+Your job is to analyze mom profiles and find the BEST available match based on ACTUAL SIMILARITIES in their profiles.
 
 CRITICAL RULES:
 - ALWAYS select a match from the list - never say "no match found"
 - Never mention "AI" or "algorithm" - speak as if you're a caring friend who knows both moms
 - Generate warm, human reasons for the match in ${language === 'el' ? 'Greek' : 'English'}
-- Focus on emotional connection, not technical scores
-- Even if compatibility seems low, find SOMETHING positive to highlight
-- Scores can range from 60-100: 60-75 = potential connection, 75-85 = good match, 85+ = great match
+- Focus on REAL similarities you can see in the profiles:
+  * Same/similar children ages (e.g., both have toddlers, both have newborns)
+  * Shared interests (e.g., both like yoga, cooking, reading)
+  * Same marital status if single mom (e.g., "Είστε και οι δύο single mamas!")
+  * Same location/area
+  * Similar lifestyle indicators
+- DO NOT claim similarities that don't exist in the data!
+- Scores: 60-75 = potential, 75-85 = good, 85+ = great match
 
-Reason examples (${language === 'el' ? 'Greek' : 'English'}):
+Examples of GOOD reasons (${language === 'el' ? 'Greek' : 'English'}):
 ${language === 'el' ? `
-- "Τα παιδιά σας είναι στην ίδια ηλικία - θα έχετε πολλά να μοιραστείτε!"
-- "Φαίνεται να έχετε παρόμοιο mood τελευταία 🌸"
-- "Είστε και οι δύο online συχνά τις ίδιες ώρες"
-- "Μοιράζεστε την αγάπη για [interest] - τέλεια αφορμή για καφεδάκι!"
-- "Είστε στην ίδια γειτονιά - ποτέ δεν ξέρεις!"
-- "Μπορεί να σας εκπλήξει αυτή η γνωριμία 💫"
+- "Τα παιδάκια σας είναι στην ίδια ηλικία - τέλεια για playdate!"
+- "Είστε και οι δύο single mamas! 💪"  
+- "Σας αρέσει και στις δύο η γιόγκα 🧘"
+- "Μοιράζεστε την αγάπη για το μαγείρεμα! 🍳"
+- "Είστε στην ίδια γειτονιά!"
+- "Και οι δύο έχετε νεογέννητα - θα έχετε πολλά να μοιραστείτε! 👶"
 ` : `
-- "Your kids are the same age - you'll have so much to share!"
-- "You seem to have a similar mood lately 🌸"
-- "You're both online around the same times"
-- "You share a love for [interest] - perfect excuse for coffee!"
-- "You're in the same neighborhood - you never know!"
-- "This connection might surprise you 💫"
+- "Your kids are the same age - perfect for playdates!"
+- "You're both single mamas! 💪"
+- "You both love yoga 🧘"
+- "You share a love for cooking! 🍳"
+- "You're in the same neighborhood!"
+- "You both have newborns - so much to share! 👶"
 `}`;
 
-    const userPrompt = `Analyze these mom profiles and find the BEST match for the current user.
+    // Build detailed profile comparison data
+    const currentProfileDetails = {
+      interests: currentInterests,
+      childAges: currentChildAges,
+      childAgeGroup: currentProfile.child_age_group,
+      maritalStatus: currentMaritalStatus,
+      area: currentProfile.area,
+      city: currentProfile.city
+    };
 
-CURRENT MOM:
+    const userPrompt = `Find the BEST match based on REAL similarities only.
+
+CURRENT MOM PROFILE:
 - Name: ${currentProfile.full_name}
 - Location: ${currentProfile.area}, ${currentProfile.city}
-- Interests: ${(currentProfile.interests || []).join(', ') || 'Not specified'}
-- Child info: ${currentProfile.child_age_group || 'Not specified'}
+- Interests: ${currentInterests.join(', ') || 'Not specified'}
+- Children ages: ${currentChildAges.join(', ') || currentProfile.child_age_group || 'Not specified'}
+- Marital Status: ${currentMaritalStatus || 'Not specified'}
 - Bio: ${currentProfile.bio || 'Not specified'}
-- Last active: ${currentProfile.last_seen_at || 'Recently'}
 
 POTENTIAL MATCHES:
-${potentialMatches.slice(0, 10).map((p: ProfileData, i: number) => `
+${potentialMatches.slice(0, 10).map((p: ProfileData, i: number) => {
+  const pChildren = p.children || [];
+  const pInterests: string[] = p.interests || [];
+  const pMarital = p.marital_status || '';
+  const commonInterests = currentInterests.filter((int: string) => pInterests.includes(int));
+  const childAges = pChildren.map(c => c.ageGroup || c.age).filter(Boolean);
+  
+  return `
 ${i + 1}. ${p.full_name}
    - Location: ${p.area}, ${p.city}
-   - Interests: ${(p.interests || []).join(', ') || 'Not specified'}
-   - Child info: ${p.child_age_group || 'Not specified'}
+   - Interests: ${pInterests.join(', ') || 'Not specified'}
+   - Common interests with current: [${commonInterests.join(', ')}]
+   - Children ages: ${childAges.join(', ') || p.child_age_group || 'Not specified'}
+   - Marital Status: ${pMarital || 'Not specified'}
+   - Same area: ${p.area?.toLowerCase() === currentProfile.area?.toLowerCase() ? 'YES' : 'NO'}
+   - Same city: ${p.city?.toLowerCase() === currentProfile.city?.toLowerCase() ? 'YES' : 'NO'}
    - Bio: ${p.bio || 'Not specified'}
-   - Last active: ${p.last_seen_at || 'Recently'}
-`).join('\n')}
+`;
+}).join('\n')}
 
-Return the TOP match with warm, human reasons for why they'd connect well.`;
+IMPORTANT: Only mention similarities that ACTUALLY EXIST in the data above. 
+If they share interests, mention specific ones. If kids are same age, mention it.
+If they're both single moms, mention it. If they're in the same area, mention it.
+DO NOT make up similarities!
+
+Return the TOP match with accurate, specific reasons.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
