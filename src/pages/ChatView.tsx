@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { el } from "date-fns/locale";
 import MomGifPicker from "@/components/chat/MomGifPicker";
 import SmartReplySuggestions from "@/components/chat/SmartReplySuggestions";
+import ChatPhotoUpload from "@/components/chat/ChatPhotoUpload";
 import { hapticFeedback } from "@/hooks/use-haptic";
 import {
   DropdownMenu,
@@ -473,6 +474,14 @@ export default function ChatView() {
                       className="max-w-[200px] rounded-lg"
                       loading="lazy"
                     />
+                  ) : message.content.startsWith('[IMG]') ? (
+                    <img 
+                      src={message.content.replace('[IMG] ', '')} 
+                      alt="Shared photo" 
+                      className="max-w-[220px] max-h-[280px] rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      loading="lazy"
+                      onClick={() => window.open(message.content.replace('[IMG] ', ''), '_blank')}
+                    />
                   ) : (
                     <p className="text-sm text-foreground whitespace-pre-wrap break-words">
                       {message.content}
@@ -552,8 +561,9 @@ export default function ChatView() {
         />
       )}
 
-      {/* Emoji & GIF Bar */}
+      {/* Emoji & GIF & Photo Bar */}
       <div className="px-4 py-2 border-t border-border bg-card flex gap-2 overflow-x-auto items-center">
+        <ChatPhotoUpload onUploadComplete={(url) => sendMessage(`[IMG] ${url}`)} />
         <MomGifPicker onSelect={(gifUrl) => sendMessage(`[GIF] ${gifUrl}`)} />
         <div className="w-px h-6 bg-border" />
         {EMOJI_SHORTCUTS.map((item, index) => (
