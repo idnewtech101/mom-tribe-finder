@@ -9,25 +9,7 @@ interface ChildInfo {
   gender?: string;
 }
 
-export interface ProfileMatch {
-  id: string;
-  full_name: string;
-  profile_photo_url: string | null;
-  profile_photos_urls: string[] | null;
-  bio: string | null;
-  city: string;
-  area: string;
-  interests: string[] | null;
-  children: Json | null;
-  latitude: number | null;
-  longitude: number | null;
-  distance?: number;
-  matchPercentage?: number;
-  commonInterestsCount?: number;
-  totalInterests?: number;
-  ageMatchScore?: number;
-  interestsMatchScore?: number;
-}
+// Merged ProfileMatch interface (single definition)
 
 interface MatchingFilters {
   showLocationFilter: boolean;
@@ -64,6 +46,8 @@ export interface ProfileMatch {
   isSameCity?: boolean;
   isSameArea?: boolean;
   locationBoost?: number; // 1 = same city, 2 = same area, 3 = same area + lifestyle
+  // Age matching indicator
+  ageDiffMonths?: number;
 }
 
 export type SortOption = 'recommended' | 'nearby' | 'lifestyle' | 'same_stage';

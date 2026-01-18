@@ -185,7 +185,13 @@ export function MomCardMicroText({ profile, currentUser }: MomCardMicroTextProps
   const { getText } = useMicrocopy();
   
   // Determine which micro-text to show based on match qualities
-  const hasSameStage = typeof profile.ageMatchScore === "number" && profile.ageMatchScore >= 80;
+  // CRITICAL: Only show "same stage" if we have RELIABLE age data (ageDiffMonths is defined)
+  const hasReliableAgeData = typeof profile.ageDiffMonths === "number";
+  const hasSameStage = hasReliableAgeData && 
+                       typeof profile.ageMatchScore === "number" && 
+                       profile.ageMatchScore >= 80 && 
+                       profile.ageDiffMonths <= 12; // Within 12 months
+  
   const hasLocationBoost = profile.isSameCity || profile.isSameArea;
   const hasLifestyle = (profile.lifestyleMatchCount || 0) > 0;
 
