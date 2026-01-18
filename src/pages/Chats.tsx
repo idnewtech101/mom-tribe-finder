@@ -183,7 +183,7 @@ export default function Chats() {
         alt="Momster Mascot" 
         className="fixed top-24 right-4 w-20 h-20 opacity-20 object-contain pointer-events-none"
       />
-      <div className="max-w-2xl mx-auto pt-20 pb-24 px-4" style={{ marginTop: pullDistance }}>
+      <div className="max-w-2xl mx-auto pt-20 pb-40 px-4" style={{ marginTop: pullDistance }}>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Pacifico', cursive" }}>
             Συνομιλίες
@@ -267,13 +267,6 @@ export default function Chats() {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="fixed bottom-20 left-0 right-0 py-3 px-4 bg-background/80 backdrop-blur-md border-t border-border">
-        <div className="max-w-2xl mx-auto flex items-center justify-center gap-2">
-          <img src={mascot} alt="Momster Mascot" className="w-8 h-8 object-contain" />
-          <span className="text-sm text-muted-foreground">Together, moms thrive!</span>
-        </div>
-      </footer>
     </div>
   );
 }
