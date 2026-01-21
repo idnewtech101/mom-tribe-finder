@@ -14,7 +14,7 @@ import { el } from "date-fns/locale";
 import { 
   Plus, MapPin, Calendar, Clock, Users, Baby, Coffee, 
   TreePine, ShoppingBag, Heart, Lock, Info, AlertTriangle,
-  MessageCircle, ArrowLeft, Timer
+  MessageCircle, ArrowLeft, Timer, X, Bell
 } from "lucide-react";
 import mascot from "@/assets/mascot.jpg";
 import { useNavigate } from "react-router-dom";
@@ -62,6 +62,7 @@ export default function MomMeets() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [creating, setCreating] = useState(false);
   const [joiningMeetId, setJoiningMeetId] = useState<string | null>(null);
+  const [cancellingMeetId, setCancellingMeetId] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -243,6 +244,34 @@ export default function MomMeets() {
       }
     } finally {
       setJoiningMeetId(null);
+    }
+  };
+
+  const handleCancelParticipation = async (meetId: string, isCreator: boolean) => {
+    if (!currentUserId) return;
+    
+    if (isCreator) {
+      toast.error("Δεν μπορείς να ακυρώσεις τη συμμετοχή σου ως διοργανώτρια");
+      return;
+    }
+
+    setCancellingMeetId(meetId);
+    try {
+      const { error } = await supabase
+        .from("mom_meet_participants")
+        .delete()
+        .eq("mom_meet_id", meetId)
+        .eq("user_id", currentUserId);
+
+      if (error) throw error;
+
+      toast.success("Η συμμετοχή σου ακυρώθηκε");
+      await loadData();
+    } catch (error) {
+      console.error("Error cancelling participation:", error);
+      toast.error("Σφάλμα κατά την ακύρωση");
+    } finally {
+      setCancellingMeetId(null);
     }
   };
 
@@ -513,22 +542,48 @@ export default function MomMeets() {
                         </p>
                       </div>
                       
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 space-y-2">
                         {meet.is_participant ? (
-                          <Button 
-                            variant="default" 
-                            size="sm" 
-                            className="flex-1 bg-gradient-to-r from-rose-400 to-pink-400"
-                            onClick={() => navigate(`/mom-meet-chat/${meet.id}`)}
-                          >
-                            <MessageCircle className="w-4 h-4 mr-1" />
-                            Μπες στο chat
-                          </Button>
+                          <>
+                            {/* Reminder badge */}
+                            {countdown && (
+                              <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full">
+                                <Bell className="w-3 h-3" />
+                                <span>Υπενθύμιση: {countdown}</span>
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="flex-1 bg-gradient-to-r from-rose-400 to-pink-400"
+                                onClick={() => navigate(`/mom-meet-chat/${meet.id}`)}
+                              >
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                Μπες στο chat
+                              </Button>
+                              {meet.creator_id !== currentUserId && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="text-muted-foreground border-muted"
+                                  onClick={() => handleCancelParticipation(meet.id, meet.creator_id === currentUserId)}
+                                  disabled={cancellingMeetId === meet.id}
+                                >
+                                  {cancellingMeetId === meet.id ? (
+                                    "..."
+                                  ) : (
+                                    <X className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </>
                         ) : isFull ? (
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="flex-1"
+                            className="w-full"
                             onClick={() => {
                               setFormData(prev => ({ ...prev, meet_type: meet.meet_type }));
                               setShowCreateDialog(true);
@@ -539,7 +594,7 @@ export default function MomMeets() {
                         ) : (
                           <Button 
                             size="sm" 
-                            className="flex-1 bg-gradient-to-r from-rose-400 to-pink-400"
+                            className="w-full bg-gradient-to-r from-rose-400 to-pink-400"
                             onClick={() => handleJoinMeet(meet.id)}
                             disabled={isJoining}
                           >
@@ -603,19 +658,18 @@ export default function MomMeets() {
               </Badge>
             </div>
 
-            <div className="space-y-2 opacity-80">
+            <div className="flex flex-wrap gap-2 justify-center opacity-80">
               {[
-                { emoji: '🧸', label: 'Επίσημη Momster stroller walk' },
-                { emoji: '🍷', label: 'Μόνο μαμάδες — wine & chat' },
+                { emoji: '🧸', label: 'Stroller walk' },
+                { emoji: '🍷', label: 'Wine & chat' },
                 { emoji: '📚', label: 'Ιστορίες & αγκαλιές' },
                 { emoji: '🛝', label: 'Momster Playday' },
+                { emoji: '🎨', label: 'Creative workshop' },
               ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-white/60 rounded-lg px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{item.emoji}</span>
-                    <span className="text-sm text-purple-700 font-medium">{item.label}</span>
-                  </div>
-                  <Lock className="w-4 h-4 text-purple-300" />
+                <div key={idx} className="inline-flex items-center gap-1.5 bg-white/60 rounded-full px-3 py-1.5">
+                  <span className="text-sm">{item.emoji}</span>
+                  <span className="text-xs text-purple-700 font-medium">{item.label}</span>
+                  <Lock className="w-3 h-3 text-purple-300" />
                 </div>
               ))}
             </div>

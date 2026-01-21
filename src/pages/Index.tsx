@@ -170,6 +170,35 @@ const Index = () => {
               </CardContent>
             </Card>
 
+            {/* Mom Meets - Village in Action */}
+            <Link to="/mom-meets" className="md:col-span-3">
+              <Card className="bg-gradient-to-br from-purple-100 via-rose-50 to-pink-100 border-purple-200/50 hover:shadow-xl transition-all hover:scale-[1.02]">
+                <CardContent className="p-6 relative overflow-hidden">
+                  <div className="absolute top-2 right-2 opacity-15">
+                    <img src={mascot} alt="Mascot" className="w-16 h-16 object-contain" />
+                  </div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">🏡</span>
+                    <h3 className="text-xl font-bold text-foreground">Mom Meets</h3>
+                    <Badge variant="outline" className="text-xs border-purple-300 text-purple-600">
+                      The village in action
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Μικρές συναντήσεις χωρίς πίεση — από μαμάδες, για μαμάδες.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="bg-rose-100 text-rose-700 text-xs">
+                      👩‍👦 Community Meets
+                    </Badge>
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+                      ✨ Official Meets — Coming Soon
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
             {/* Magic Matching Button - circular style */}
             <div className="md:col-span-1">
               <MagicMatching />
