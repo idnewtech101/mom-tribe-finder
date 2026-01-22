@@ -16,13 +16,64 @@ export default function SilentHug({ language }: SilentHugProps) {
   const [activeHugRequest, setActiveHugRequest] = useState<any>(null);
   const [hugsReceived, setHugsReceived] = useState(0);
   const [showCounter, setShowCounter] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
   const { toast } = useToast();
   const { triggerHaptic } = useHaptic();
   const { showNotification, permission } = usePushNotifications();
 
+  const COOLDOWN_HOURS = 1; // 1 hour rate limit
+
   useEffect(() => {
     checkActiveHugRequest();
+    checkCooldown();
   }, []);
+
+  // Update cooldown timer every minute
+  useEffect(() => {
+    if (cooldownRemaining === null || cooldownRemaining <= 0) return;
+    
+    const interval = setInterval(() => {
+      setCooldownRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [cooldownRemaining]);
+
+  const checkCooldown = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get the most recent hug request
+      const { data, error } = await supabase
+        .from('silent_hugs')
+        .select('created_at')
+        .eq('requester_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data && !error) {
+        const createdAt = new Date(data.created_at);
+        const now = new Date();
+        const diffMs = now.getTime() - createdAt.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const cooldownMinutes = COOLDOWN_HOURS * 60;
+
+        if (diffMinutes < cooldownMinutes) {
+          setCooldownRemaining(cooldownMinutes - diffMinutes);
+        }
+      }
+    } catch (error) {
+      // No previous request, no cooldown needed
+    }
+  };
 
   // Subscribe to realtime updates for the user's hug request
   useEffect(() => {
@@ -92,6 +143,17 @@ export default function SilentHug({ language }: SilentHugProps) {
   };
 
   const handleRequestHug = async () => {
+    // Check cooldown first
+    if (cooldownRemaining && cooldownRemaining > 0) {
+      toast({
+        title: language === 'el' ? '⏳ Λίγη υπομονή' : '⏳ Please wait',
+        description: language === 'el' 
+          ? `Μπορείς να ζητήσεις αγκαλιά σε ${cooldownRemaining} λεπτά` 
+          : `You can request a hug in ${cooldownRemaining} minutes`,
+      });
+      return;
+    }
+
     setIsRequesting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -130,6 +192,7 @@ export default function SilentHug({ language }: SilentHugProps) {
       setActiveHugRequest(hugRequest);
       setHugsReceived(0);
       setShowCounter(true);
+      setCooldownRemaining(COOLDOWN_HOURS * 60); // Set cooldown after successful request
       triggerHaptic('medium');
 
       toast({
@@ -271,14 +334,16 @@ export default function SilentHug({ language }: SilentHugProps) {
         <div className="flex-1 space-y-2">
           <Button
             onClick={handleRequestHug}
-            disabled={isRequesting}
-            className="w-full bg-white/80 hover:bg-white text-[#C8788D] border border-[#E8C5D0] shadow-sm hover:shadow-md transition-all rounded-xl py-3 font-medium"
+            disabled={isRequesting || (cooldownRemaining !== null && cooldownRemaining > 0)}
+            className="w-full bg-white/80 hover:bg-white text-[#C8788D] border border-[#E8C5D0] shadow-sm hover:shadow-md transition-all rounded-xl py-3 font-medium disabled:opacity-60"
             variant="outline"
           >
             <span className="mr-2">🫂</span>
             {isRequesting 
               ? (language === 'el' ? 'Στέλνεται...' : 'Sending...')
-              : (language === 'el' ? 'Χρειάζομαι μια αγκαλιά' : 'I need a hug')
+              : cooldownRemaining && cooldownRemaining > 0
+                ? (language === 'el' ? `Διαθέσιμο σε ${cooldownRemaining} λεπτά` : `Available in ${cooldownRemaining} min`)
+                : (language === 'el' ? 'Χρειάζομαι μια αγκαλιά' : 'I need a hug')
             }
           </Button>
           <p className="text-[10px] text-[#C8788D]/60 text-center">

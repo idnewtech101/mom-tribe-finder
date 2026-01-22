@@ -253,10 +253,28 @@ export default function DailyBoost() {
   const [showProudConfetti, setShowProudConfetti] = useState(false);
   const { isNightTime } = useNightMode();
   const [profile, setProfile] = useState<any>(null);
+  const [upcomingMeetsCount, setUpcomingMeetsCount] = useState(0);
 
   useEffect(() => {
     fetchProfileAndShowWelcome();
+    fetchUpcomingMeetsCount();
   }, []);
+
+  const fetchUpcomingMeetsCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('mom_meets')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['open', 'full'])
+        .gt('date', new Date().toISOString().split('T')[0]);
+
+      if (!error && count !== null) {
+        setUpcomingMeetsCount(count);
+      }
+    } catch (error) {
+      console.error('Error fetching upcoming meets count:', error);
+    }
+  };
 
   const fetchProfileAndShowWelcome = async () => {
     try {
@@ -531,6 +549,12 @@ export default function DailyBoost() {
             <Card className="p-8 bg-gradient-to-br from-rose-200 via-pink-200 to-rose-300 border-2 border-rose-300 overflow-hidden relative hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer group rounded-[30px] h-full shadow-lg">
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
               <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/15 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+              {/* Upcoming Meets Badge */}
+              {upcomingMeetsCount > 0 && (
+                <div className="absolute top-4 right-4 bg-rose-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg animate-pulse">
+                  {upcomingMeetsCount} {language === 'el' ? 'επερχόμενα' : 'upcoming'}
+                </div>
+              )}
               <div className="relative space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/40 rounded-xl">
