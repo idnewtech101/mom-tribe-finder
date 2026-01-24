@@ -32,17 +32,17 @@ const handler = async (req: Request): Promise<Response> => {
       ? `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #FFF5F7;">
           <h1 style="color: #FF69B4; text-align: center;">Momster 🌸</h1>
-          <p>Γεια σου μανούλα 💕</p>
+          <p>Γεια σου μαμά 🤍</p>
           <p>Λάβαμε αίτημα για επαναφορά του κωδικού σου στο Momster.</p>
-          <p>Αν ήσουν εσύ, πάτα το κουμπί παρακάτω για να ορίσεις νέο κωδικό:</p>
+          <p>Μην ανησυχείς — συμβαίνει και στις καλύτερες 😉</p>
+          <p>Πάτησε στο παρακάτω κουμπί για να ορίσεις νέο κωδικό πρόσβασης:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetLink}" style="background: #FF69B4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Επαναφορά Κωδικού</a>
+            <a href="${resetLink}" style="background: #FF69B4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">👉 Επαναφορά κωδικού</a>
           </div>
-          <p style="font-size: 12px; color: #666;">Το link θα είναι ενεργό για 15 λεπτά για την ασφάλειά σου.</p>
-          <p>Αν δεν έκανες εσύ το αίτημα, μπορείς απλώς να αγνοήσεις αυτό το μήνυμα.</p>
-          <p>Εμείς είμαστε εδώ — πάντα με αγάπη 🌸</p>
-          <p style="text-align: center; font-style: italic; color: #FF69B4; margin-top: 20px;">Together, moms thrive! 💫</p>
-          <p style="text-align: center; color: #666;">Η ομάδα του Momster</p>
+          <p style="font-size: 13px; color: #666;">Αν δεν ζήτησες εσύ επαναφορά κωδικού, απλώς αγνόησε αυτό το email.</p>
+          <p style="font-size: 13px; color: #666;">Ο λογαριασμός σου παραμένει ασφαλής ✨</p>
+          <p style="margin-top: 20px;">Είμαστε εδώ για να σε βοηθήσουμε 💗</p>
+          <p style="margin-top: 20px;">Με αγάπη,<br><strong>Η ομάδα του Momster 🫶</strong></p>
         </div>
       `
       : `
