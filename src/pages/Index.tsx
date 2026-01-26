@@ -103,9 +103,19 @@ const Index = () => {
              </div>
           </div>
           
-          <p className="text-xl text-foreground mb-6 font-medium">
+          <p className="text-xl text-foreground mb-4 font-medium">
             {t('heroTagline')}
           </p>
+          
+          {/* Manifesto text */}
+          <div className="text-sm text-foreground/80 mb-6 max-w-xl mx-auto space-y-1 italic">
+            <p>We rise higher when we rise together.</p>
+            <p>On Momster, you are friends by default.</p>
+            <p>There is room for all of us to shine.</p>
+            <p>Moms supporting moms {'>'} everything else.</p>
+            <p>Not a social app.</p>
+            <p>A mom village. 🫶</p>
+          </div>
           
           <p className="text-base text-muted-foreground mb-6 max-w-2xl mx-auto">
             {t('heroDescription')}
