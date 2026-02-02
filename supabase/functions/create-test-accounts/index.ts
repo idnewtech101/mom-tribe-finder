@@ -111,31 +111,52 @@ function generateChildren(count: number): any[] {
   return children;
 }
 
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    if (!supabaseUrl || !serviceKey) {
+      return json({ error: 'Missing backend configuration' }, 500);
+    }
+
+    // Verify caller is authenticated + admin
+    const authClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: userData, error: userError } = await authClient.auth.getUser();
+    if (userError || !userData.user) return json({ error: 'Unauthorized' }, 401);
+
+    const { data: isAdmin, error: roleErr } = await authClient.rpc('has_role', {
+      _user_id: userData.user.id,
+      _role: 'admin',
+    });
+
+    if (roleErr) return json({ error: 'Role check failed' }, 403);
+    if (!isAdmin) return json({ error: 'Admins only' }, 403);
+
     const { count = 10 } = await req.json();
 
     if (count > 50) {
-      return new Response(
-        JSON.stringify({ error: 'Μέγιστος αριθμός accounts: 50' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json({ error: 'Μέγιστος αριθμός accounts: 50' }, 400);
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const createdAccounts = [];
 
